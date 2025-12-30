@@ -1,0 +1,1000 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-user-plus"></i> Cadastro de Usuários</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        {% if session.nivel_acesso == 'admin' %}
+        <a href="{{ url_for('corrigir_admin') }}" class="btn btn-warning" onclick="return confirm('Corrigir perfil do admin?')">
+            <i class="fas fa-tools"></i> Corrigir Admin
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="form-section">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'error' else 'error' }} mb-4">
+                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'info-circle' }}"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- Formulário de Cadastro/Edição -->
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-user-edit"></i>
+                        <span id="formTitle">Novo Usuário</span>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form id="userForm" method="POST" action="{{ url_for('cadastrar_usuario') }}">
+                        <input type="hidden" id="userId" name="user_id" value="">
+                        
+                        <div class="form-group">
+                            <label for="nome_completo">Nome Completo *</label>
+                            <input type="text" id="nome_completo" name="nome_completo" 
+                                   class="form-control" required placeholder="Digite o nome completo">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nome_guerra">Nome de Guerra *</label>
+                            <input type="text" id="nome_guerra" name="nome_guerra" 
+                                   class="form-control" required placeholder="Nome utilizado no serviço">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="posto_graduacao">Posto/Graduação *</label>
+                            <select id="posto_graduacao" name="posto_graduacao" class="form-control" required>
+                                <option value="">Selecione o posto/graduação...</option>
+                                <optgroup label="Oficiais Generais">
+                                    <option value="general_exercito">General de Exército</option>
+                                    <option value="general_divisao">General de Divisão</option>
+                                    <option value="general_brigada">General de Brigada</option>
+                                </optgroup>
+                                <optgroup label="Oficiais Superiores">
+                                    <option value="coronel">Coronel</option>
+                                    <option value="tenente_coronel">Tenente-Coronel</option>
+                                    <option value="major">Major</option>
+                                </optgroup>
+                                <optgroup label="Oficiais Subalternos">
+                                    <option value="capitao">Capitão</option>
+                                    <option value="primeiro_tenente">1º Tenente</option>
+                                    <option value="segundo_tenente">2º Tenente</option>
+                                    <option value="aspirante">Aspirante</option>
+                                </optgroup>
+                                <optgroup label="Subtenentes e Sargentos">
+                                    <option value="subtenente">Subtenente</option>
+                                    <option value="primeiro_sargento">1º Sargento</option>
+                                    <option value="segundo_sargento">2º Sargento</option>
+                                    <option value="terceiro_sargento">3º Sargento</option>
+                                </optgroup>
+                                <optgroup label="Cabos e Soldados">
+                                    <option value="cabo">Cabo</option>
+                                    <option value="soldado">Soldado</option>
+                                    <option value="taifeiro">Taifeiro</option>
+                                </optgroup>
+                                <optgroup label="Servidores Civis">
+                                    <option value="civil_superior">Servidor Superior</option>
+                                    <option value="civil_tecnico">Servidor Técnico</option>
+                                    <option value="civil_administrativo">Servidor Administrativo</option>
+                                </optgroup>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="orgao_provedor">Órgão Provedor *</label>
+                            <select id="orgao_provedor" name="orgao_provedor" class="form-control" required>
+                                <option value="">Selecione o órgão provedor...</option>
+                                <option value="1º DEPÓSITO DE SUPRIMENTO">1º DEPÓSITO DE SUPRIMENTO (1º D SUP)</option>
+                                <option value="2º BATALHÃO DE SUPRIMENTO">2º BATALHÃO DE SUPRIMENTO (2º B SUP)</option>
+                                <option value="3º BATALHÃO DE SUPRIMENTO">3º BATALHÃO DE SUPRIMENTO (3º B SUP)</option>
+                                <option value="4º DEPÓSITO DE SUPRIMENTO">4º DEPÓSITO DE SUPRIMENTO (4º D SUP)</option>
+                                <option value="5º BATALHÃO DE SUPRIMENTO">5º BATALHÃO DE SUPRIMENTO (5º B SUP)</option>
+                                <option value="6º DEPÓSITO DE SUPRIMENTO">6º DEPÓSITO DE SUPRIMENTO (6º D SUP)</option>
+                                <option value="7º DEPÓSITO DE SUPRIMENTO">7º DEPÓSITO DE SUPRIMENTO (7º D SUP)</option>
+                                <option value="8º BATALHÃO DE SUPRIMENTO DE SELVA">8º BATALHÃO DE SUPRIMENTO DE SELVA (8º B SUP SL)</option>
+                                <option value="9º BATALHÃO DE SUPRIMENTO">9º BATALHÃO DE SUPRIMENTO (9º B SUP)</option>
+                                <option value="10º DEPÓSITO DE SUPRIMENTO">10º DEPÓSITO DE SUPRIMENTO (10º D SUP)</option>
+                                <option value="11º DEPÓSITO DE SUPRIMENTO">11º DEPÓSITO DE SUPRIMENTO (11º D SUP)</option>
+                                <option value="12º BATALHÃO DE SUPRIMENTO">12º BATALHÃO DE SUPRIMENTO (12º B SUP)</option>
+                                <option value="1º BATALHÃO LOGÍSTICO DE SELVA">1º BATALHÃO LOGÍSTICO DE SELVA (1º B LOG SL)</option>
+                                <option value="17º BATALHÃO LOGÍSTICO DE SELVA">17º BATALHÃO LOGÍSTICO DE SELVA (17º B LOG SL)</option>
+                                <option value="16ª BASE LOGÍSTICA">16ª BASE LOGÍSTICA (16ª BA LOG)</option>
+                                <option value="DEPÓSITO DE SUBSISTÊNCIA DE SANTA MARIA">DEPÓSITO DE SUBSISTÊNCIA DE SANTA MARIA (DSSM)</option>
+                                <option value="DEPÓSITO DE SUBSISTÊNCIA DE SANTO ÂNGELO">DEPÓSITO DE SUBSISTÊNCIA DE SANTO ÂNGELO (DSSA)</option>
+                                <option value="DEPÓSITO CENTRAL DE MUNIÇÃO">DEPÓSITO CENTRAL DE MUNIÇÃO (DC MUN)</option>
+                                <option value="13ª COMPANHIA DEPÓSITO DE ARMAMENTO E MUNIÇÃO">13ª COMPANHIA DEPÓSITO DE ARMAMENTO E MUNIÇÃO (13ª CIA DAM)</option>
+                                <option value="CENTRO LOGÍSTICO DE MÍSSEIS E FOGUETES">CENTRO LOGÍSTICO DE MÍSSEIS E FOGUETES (C LOG MSL FGT)</option>
+                                <option value="BATALHÃO DE DOBRAGEM, MANUTENÇÃO DE PÁRA-QUEDAS E SUPRIMENTO PELO AR">BATALHÃO DE DOBRAGEM, MANUTENÇÃO DE PÁRA-QUEDAS E SUPRIMENTO PELO AR (B DOMPSA)</option>
+                            </select>
+                            <small class="form-text text-muted">Usuário ficará vinculado a este órgão e terá acesso apenas ao cadastro respectivo</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">E-mail *</label>
+                            <input type="email" id="email" name="email" 
+                                   class="form-control" required placeholder="exemplo@dominio.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="username">Nome de Usuário *</label>
+                            <input type="text" id="username" name="username" 
+                                   class="form-control" required placeholder="Escolha um nome de usuário">
+                            <small class="form-text text-muted">Será usado para fazer login no sistema</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nivel_acesso">Perfil de Acesso *</label>
+                            <select id="nivel_acesso" name="nivel_acesso" class="form-control" required>
+                                <option value="">Selecione um perfil...</option>
+                                <option value="admin">Administrador</option>
+                                <option value="cadastrador">Cadastrador OP</option>
+                                <option value="visualizador">Visualizador</option>
+                            </select>
+                            <div class="mt-3">
+                                <div id="perfilDescricao" class="perfil-descricao">
+                                    <!-- Descrição do perfil será carregada aqui -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Senha <span id="passwordRequired">*</span></label>
+                            <div class="input-group">
+                                <input type="password" id="password" name="password" 
+                                       class="form-control" placeholder="Digite a senha">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline" type="button" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted" id="passwordHelp">
+                                Mínimo de 8 caracteres, com letras e números
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password">Confirmar Senha <span id="confirmPasswordRequired">*</span></label>
+                            <div class="input-group">
+                                <input type="password" id="confirm_password" name="confirm_password" 
+                                       class="form-control" placeholder="Digite a senha novamente">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline" type="button" onclick="togglePassword('confirm_password')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group form-check">
+                            <input type="checkbox" id="ativo" name="ativo" class="form-check-input" checked>
+                            <label class="form-check-label" for="ativo">Usuário ativo</label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-save"></i> Salvar Usuário
+                            </button>
+                            <button type="button" class="btn btn-outline" id="cancelBtn" style="display: none;">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="resetForm()">
+                                <i class="fas fa-redo"></i> Limpar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Card com informações dos perfis -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4><i class="fas fa-info-circle"></i> Informações sobre os Perfis</h4>
+                </div>
+                <div class="card-body">
+                    <div class="perfil-info admin-info">
+                        <h5><i class="fas fa-crown"></i> Administrador</h5>
+                        <p class="small">Acesso completo ao sistema. Pode:</p>
+                        <ul class="small">
+                            <li>Gerenciar todos os usuários</li>
+                            <li>Acessar e modificar todos os cadastros</li>
+                            <li>Configurar o sistema</li>
+                            <li>Gerar relatórios completos</li>
+                        </ul>
+                    </div>
+
+                    <div class="perfil-info cadastrador-info">
+                        <h5><i class="fas fa-edit"></i> Cadastrador OP</h5>
+                        <p class="small">Acesso para operações de cadastro. Pode:</p>
+                        <ul class="small">
+                            <li>Cadastrar novos órgãos provedores</li>
+                            <li>Editar seus próprios cadastros</li>
+                            <li>Visualizar todos os cadastros</li>
+                            <li>Gerar relatórios básicos</li>
+                        </ul>
+                    </div>
+
+                    <div class="perfil-info visualizador-info">
+                        <h5><i class="fas fa-eye"></i> Visualizador</h5>
+                        <p class="small">Acesso somente leitura. Pode:</p>
+                        <ul class="small">
+                            <li>Visualizar todos os cadastros</li>
+                            <li>Exportar dados para impressão</li>
+                            <li>Não pode modificar registros</li>
+                            <li>Não pode gerenciar usuários</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Usuários -->
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users"></i> Usuários Cadastrados ({{ usuarios|length }})</h3>
+                    <div class="search-box">
+                        <div class="input-group">
+                            <input type="text" id="searchUsers" placeholder="Buscar usuários..." class="form-control">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline" type="button" onclick="filtrarUsuarios()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if usuarios %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Posto/Nome</th>
+                                    <th>Usuário/Perfil</th>
+                                    <th>Órgão</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in usuarios %}
+                                <tr data-user-id="{{ usuario.id }}" data-search="{{ usuario.nome_completo|lower }} {{ usuario.nome_guerra|lower }} {{ usuario.posto_graduacao|lower }} {{ usuario.username|lower }} {{ usuario.nivel_acesso|lower }} {{ usuario.orgao_provedor|lower }}">
+                                    <td>
+                                        <div class="user-info">
+                                            <div class="user-avatar" style="background-color: {% if usuario.nivel_acesso == 'admin' %}#e74c3c{% elif usuario.nivel_acesso == 'cadastrador' %}#f39c12{% else %}#3498db{% endif %};">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <strong>{{ usuario.nome_guerra or usuario.nome_completo }}</strong>
+                                                <div class="user-details">
+                                                    <small class="text-muted">{{ get_posto_display(usuario.posto_graduacao) }}</small>
+                                                    <small>{{ usuario.nome_completo }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <code>{{ usuario.username }}</code>
+                                            <div class="mt-1">
+                                                {% if usuario.nivel_acesso == 'admin' %}
+                                                    <span class="badge badge-danger badge-sm">
+                                                        <i class="fas fa-crown"></i> Admin
+                                                    </span>
+                                                {% elif usuario.nivel_acesso == 'cadastrador' %}
+                                                    <span class="badge badge-warning badge-sm">
+                                                        <i class="fas fa-edit"></i> Cadastrador
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge badge-info badge-sm">
+                                                        <i class="fas fa-eye"></i> Visualizador
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if usuario.orgao_provedor %}
+                                            <small>{{ usuario.orgao_provedor }}</small>
+                                            {% if usuario.sigla %}
+                                                <br><small class="text-muted">{{ usuario.sigla }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <small class="text-muted">Não vinculado</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if usuario.ativo %}
+                                            <span class="status-indicator status-online">
+                                                <i class="fas fa-circle"></i> Ativo
+                                            </span>
+                                        {% else %}
+                                            <span class="status-indicator status-offline">
+                                                <i class="fas fa-circle"></i> Inativo
+                                            </span>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ usuario.data_criacao.split(' ')[0] if usuario.data_criacao else 'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline btn-sm" onclick="editUser({{ usuario.id }})" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if usuario.id != session.user_id %}
+                                                {% if usuario.ativo %}
+                                                    <button class="btn btn-outline btn-sm text-warning" onclick="toggleUserStatus({{ usuario.id }}, 0)" title="Desativar">
+                                                        <i class="fas fa-ban"></i>
+                                                    </button>
+                                                {% else %}
+                                                    <button class="btn btn-outline btn-sm text-success" onclick="toggleUserStatus({{ usuario.id }}, 1)" title="Ativar">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                {% endif %}
+                                                <button class="btn btn-outline btn-sm text-danger" onclick="deleteUser({{ usuario.id }})" title="Excluir">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        {% if usuario.email %}
+                                        <div class="mt-1">
+                                            <a href="mailto:{{ usuario.email }}" class="btn-icon btn-sm" title="Enviar e-mail">
+                                                <i class="fas fa-envelope"></i>
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-users-slash fa-3x"></i>
+                        <h3>Nenhum usuário cadastrado</h3>
+                        <p>Comece cadastrando o primeiro usuário do sistema.</p>
+                        <button class="btn btn-primary" onclick="resetForm()">
+                            <i class="fas fa-user-plus"></i> Cadastrar Primeiro Usuário
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div id="confirmModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalConfirmTitle"></h3>
+            <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modalConfirmMessage"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirmar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-details small {
+    font-size: 0.85rem;
+}
+
+.perfil-descricao {
+    padding: 12px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    border-left: 4px solid #3498db;
+    font-size: 0.9rem;
+}
+
+.perfil-descricao.admin {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left-color: #e74c3c;
+}
+
+.perfil-descricao.cadastrador {
+    background-color: rgba(243, 156, 18, 0.1);
+    border-left-color: #f39c12;
+}
+
+.perfil-descricao.visualizador {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left-color: #3498db;
+}
+
+.perfil-info {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border-left: 4px solid #ddd;
+}
+
+.perfil-info.admin-info {
+    border-left-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+.perfil-info.cadastrador-info {
+    border-left-color: #f39c12;
+    background-color: rgba(243, 156, 18, 0.05);
+}
+
+.perfil-info.visualizador-info {
+    border-left-color: #3498db;
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.perfil-info h5 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.perfil-info ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.search-box {
+    max-width: 300px;
+    margin-left: auto;
+}
+
+.badge-sm {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-group-sm .btn {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #3498db;
+    cursor: pointer;
+    padding: 2px 5px;
+}
+
+.btn-icon:hover {
+    color: #2980b9;
+}
+
+.input-group-append .btn {
+    border-left: none;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background-color: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+.status-indicator.status-offline {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.status-indicator i {
+    font-size: 0.7rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #7f8c8d;
+}
+
+.empty-state i {
+    color: #bdc3c7;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #e74c3c;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Descrições dos perfis
+const perfisDescricao = {
+    'admin': {
+        titulo: 'Administrador',
+        descricao: 'Acesso completo ao sistema. Pode gerenciar todos os registros, usuários e configurações.',
+        classe: 'admin'
+    },
+    'cadastrador': {
+        titulo: 'Cadastrador OP',
+        descricao: 'Pode cadastrar novos órgãos provedores e gerenciar seus próprios cadastros.',
+        classe: 'cadastrador'
+    },
+    'visualizador': {
+        titulo: 'Visualizador',
+        descricao: 'Acesso somente para visualização de dados. Não pode criar ou modificar registros.',
+        classe: 'visualizador'
+    }
+};
+
+// Mapeamento de postos/graduações para exibição
+const postoDisplay = {
+    'general_exercito': 'General de Exército',
+    'general_divisao': 'General de Divisão',
+    'general_brigada': 'General de Brigada',
+    'coronel': 'Coronel',
+    'tenente_coronel': 'Tenente-Coronel',
+    'major': 'Major',
+    'capitao': 'Capitão',
+    'primeiro_tenente': '1º Tenente',
+    'segundo_tenente': '2º Tenente',
+    'aspirante': 'Aspirante',
+    'subtenente': 'Subtenente',
+    'primeiro_sargento': '1º Sargento',
+    'segundo_sargento': '2º Sargento',
+    'terceiro_sargento': '3º Sargento',
+    'cabo': 'Cabo',
+    'soldado': 'Soldado',
+    'taifeiro': 'Taifeiro',
+    'civil_superior': 'Servidor Superior',
+    'civil_tecnico': 'Servidor Técnico',
+    'civil_administrativo': 'Servidor Administrativo',
+    'outro': 'Outro'
+};
+
+// Elementos DOM
+let currentUserId = null;
+let modalActionCallback = null;
+
+// Inicializar quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar eventos
+    document.getElementById('nivel_acesso').addEventListener('change', atualizarDescricaoPerfil);
+    document.getElementById('cancelBtn').addEventListener('click', resetForm);
+    document.getElementById('searchUsers').addEventListener('input', filtrarUsuarios);
+    document.getElementById('searchUsers').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            filtrarUsuarios();
+        }
+    });
+    
+    // Inicializar descrição do perfil
+    atualizarDescricaoPerfil();
+});
+
+// Atualizar descrição do perfil selecionado
+function atualizarDescricaoPerfil() {
+    const select = document.getElementById('nivel_acesso');
+    const descricaoDiv = document.getElementById('perfilDescricao');
+    const valor = select.value;
+    
+    if (valor && perfisDescricao[valor]) {
+        const perfil = perfisDescricao[valor];
+        descricaoDiv.innerHTML = `
+            <strong>${perfil.titulo}</strong>
+            <p class="mb-0 small">${perfil.descricao}</p>
+        `;
+        descricaoDiv.className = `perfil-descricao ${perfil.classe}`;
+        descricaoDiv.style.display = 'block';
+    } else {
+        descricaoDiv.style.display = 'none';
+    }
+}
+
+// Alternar visibilidade da senha
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = field.parentNode.querySelector('i');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        field.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+// Editar usuário
+function editUser(userId) {
+    fetch(`/api/usuario/${userId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Erro na requisição');
+            return response.json();
+        })
+        .then(usuario => {
+            currentUserId = usuario.id;
+            
+            // Preencher formulário
+            document.getElementById('userId').value = usuario.id;
+            document.getElementById('nome_completo').value = usuario.nome_completo || '';
+            document.getElementById('nome_guerra').value = usuario.nome_guerra || '';
+            document.getElementById('posto_graduacao').value = usuario.posto_graduacao || '';
+            document.getElementById('orgao_provedor').value = usuario.orgao_provedor || '';
+            document.getElementById('email').value = usuario.email || '';
+            document.getElementById('username').value = usuario.username;
+            document.getElementById('nivel_acesso').value = usuario.nivel_acesso;
+            document.getElementById('ativo').checked = usuario.ativo == 1;
+            
+            // Atualizar campos de senha
+            document.getElementById('password').required = false;
+            document.getElementById('confirm_password').required = false;
+            document.getElementById('passwordRequired').style.display = 'none';
+            document.getElementById('confirmPasswordRequired').style.display = 'none';
+            document.getElementById('passwordHelp').textContent = 'Deixe em branco para manter a senha atual';
+            
+            // Atualizar UI
+            document.getElementById('formTitle').textContent = 'Editar Usuário';
+            document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Atualizar Usuário';
+            document.getElementById('cancelBtn').style.display = 'inline-block';
+            
+            // Atualizar descrição do perfil
+            atualizarDescricaoPerfil();
+            
+            // Scroll para o formulário
+            document.getElementById('userForm').scrollIntoView({ behavior: 'smooth' });
+            
+            showAlert('Dados do usuário carregados para edição', 'info');
+        })
+        .catch(error => {
+            console.error('Erro ao buscar usuário:', error);
+            showAlert('Erro ao carregar dados do usuário. Tente novamente.', 'error');
+        });
+}
+
+// Alternar status do usuário
+function toggleUserStatus(userId, novoStatus) {
+    const acao = novoStatus ? 'ativar' : 'desativar';
+    const usuarioNome = document.querySelector(`tr[data-user-id="${userId}"]`)?.querySelector('strong')?.textContent || 'este usuário';
+    
+    showConfirmModal(
+        `${acao.charAt(0).toUpperCase() + acao.slice(1)} Usuário`,
+        `Tem certeza que deseja ${acao} o usuário "${usuarioNome}"?`,
+        () => {
+            fetch(`/api/usuario/${userId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ativo: novoStatus })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Erro na requisição');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert(`Usuário ${acao}do com sucesso!`, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert(data.message || 'Erro ao alterar status', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                showAlert('Erro ao conectar com o servidor', 'error');
+            });
+        }
+    );
+}
+
+// Excluir usuário
+function deleteUser(userId) {
+    if (userId === {{ session.user_id|default(0) }}) {
+        showAlert('Você não pode excluir seu próprio usuário', 'error');
+        return;
+    }
+    
+    const usuarioNome = document.querySelector(`tr[data-user-id="${userId}"]`)?.querySelector('strong')?.textContent || 'este usuário';
+    
+    showConfirmModal(
+        'Excluir Usuário',
+        `Tem certeza que deseja excluir permanentemente o usuário "${usuarioNome}"? Esta ação não pode ser desfeita.`,
+        () => {
+            fetch(`/api/usuario/${userId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Erro na requisição');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('Usuário excluído com sucesso!', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert(data.message || 'Erro ao excluir usuário', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                showAlert('Erro ao conectar com o servidor', 'error');
+            });
+        }
+    );
+}
+
+// Resetar formulário
+function resetForm() {
+    document.getElementById('userForm').reset();
+    document.getElementById('userId').value = '';
+    currentUserId = null;
+    
+    // Restaurar campos de senha
+    document.getElementById('password').required = true;
+    document.getElementById('confirm_password').required = true;
+    document.getElementById('passwordRequired').style.display = 'inline';
+    document.getElementById('confirmPasswordRequired').style.display = 'inline';
+    document.getElementById('passwordHelp').textContent = 'Mínimo de 8 caracteres, com letras e números';
+    
+    // Atualizar UI
+    document.getElementById('formTitle').textContent = 'Novo Usuário';
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save"></i> Salvar Usuário';
+    document.getElementById('cancelBtn').style.display = 'none';
+    
+    // Atualizar descrição do perfil
+    atualizarDescricaoPerfil();
+    
+    // Foco no primeiro campo
+    document.getElementById('nome_completo').focus();
+    
+    showAlert('Formulário limpo. Pronto para novo cadastro.', 'info');
+}
+
+// Filtrar usuários na tabela
+function filtrarUsuarios() {
+    const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const searchData = row.getAttribute('data-search') || '';
+        if (searchData.includes(searchTerm)) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Atualizar contador se houver
+    const counter = document.querySelector('.card-header h3');
+    if (counter && visibleCount > 0) {
+        counter.innerHTML = `<i class="fas fa-users"></i> Usuários Cadastrados (${visibleCount} de {{ usuarios|length }})`;
+    }
+}
+
+// Mostrar modal de confirmação
+function showConfirmModal(title, message, callback) {
+    document.getElementById('modalConfirmTitle').textContent = title;
+    document.getElementById('modalConfirmMessage').textContent = message;
+    modalActionCallback = callback;
+    
+    const modal = document.getElementById('confirmModal');
+    modal.style.display = 'flex';
+}
+
+// Fechar modal
+function closeModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+    modalActionCallback = null;
+}
+
+// Configurar botão de confirmação do modal
+document.getElementById('confirmActionBtn').addEventListener('click', function() {
+    if (modalActionCallback) {
+        modalActionCallback();
+        closeModal();
+    }
+});
+
+// Validar formulário antes de enviar
+document.getElementById('userForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const isEditMode = document.getElementById('userId').value !== '';
+    
+    // Validar senha se for novo usuário ou se foi digitada nova senha
+    if (!isEditMode) {
+        if (password.length < 8) {
+            showAlert('A senha deve ter no mínimo 8 caracteres', 'error');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            showAlert('As senhas não conferem', 'error');
+            return;
+        }
+    } else if (password && password.length < 8) {
+        showAlert('A senha deve ter no mínimo 8 caracteres', 'error');
+        return;
+    }
+    
+    // Validar nome de usuário
+    const username = document.getElementById('username').value;
+    if (username.length < 3) {
+        showAlert('O nome de usuário deve ter no mínimo 3 caracteres', 'error');
+        return;
+    }
+    
+    // Validar e-mail
+    const email = document.getElementById('email').value;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showAlert('Por favor, insira um e-mail válido', 'error');
+        return;
+    }
+    
+    // Se todas as validações passarem, enviar formulário
+    showAlert('Salvando usuário...', 'info');
+    this.submit();
+});
+
+// Mostrar alerta
+function showAlert(message, type) {
+    // Remover alertas anteriores
+    const existingAlerts = document.querySelectorAll('.notification');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} notification`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Posicionar alerta
+    alertDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        max-width: 400px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        animation: slideInRight 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    // Remover após 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => alertDiv.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Adicionar animações CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Fechar modal ao clicar fora
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('confirmModal');
+    if (event.target === modal) {
+        closeModal();
+    }
+});
+
+// Função auxiliar para exibir posto (usada no template)
+function getPostoDisplay(postoKey) {
+    return postoDisplay[postoKey] || postoKey;
+}
+</script>
+{% endblock %}

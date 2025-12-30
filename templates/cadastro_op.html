@@ -1,0 +1,2126 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de Órgão Provedor{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1 id="cadastroTitle"><i class="fas fa-plus-circle"></i> Cadastro de Órgão Provedor</h1>
+    <div class="header-right-buttons">
+        <button type="button" id="saveDraftBtn" class="btn btn-primary btn-sm" onclick="submitFormCompleto()" data-skip-confirm="true"><i class="fas fa-save"></i> Salvar</button>
+        <a href="{{ url_for('index') }}" class="btn btn-outline" data-skip-confirm="true"><i class="fas fa-arrow-left"></i> Voltar</a>
+    </div>
+</div>
+
+<form id="cadastroForm" action="{% if edit_mode and orgao %}{{ url_for('editar_orgao', id=orgao['id']) }}{% else %}{{ url_for('cadastro') }}{% endif %}" method="POST" enctype="multipart/form-data">
+    {% if edit_mode and orgao %}
+    <input type="hidden" name="edit_mode" value="1">
+    <input type="hidden" name="orgao_id" value="{{ orgao['id'] }}">
+    {% endif %}
+    <input type="hidden" id="instalacoes_count" name="instalacoes_count" value="0">
+    <input type="hidden" id="viaturas_count" name="viaturas_count" value="0">
+    <input type="hidden" id="pessoal_count" name="pessoal_count" value="0">
+    <input type="hidden" id="geradores_count" name="geradores_count" value="0">
+    <input type="hidden" id="oms_selecionadas" name="oms_selecionadas" value="{{ (orgao['historico'] if edit_mode and orgao else '') | e }}">
+    
+    <!-- Sistema de Abas -->
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button type="button" class="tab-btn active" data-tab="dados-gerais">
+                <i class="fas fa-building"></i> Dados Gerais
+            </button>
+            <button type="button" class="tab-btn" data-tab="energia-geradores">
+                <i class="fas fa-bolt"></i> Energia & Geradores
+            </button>
+            <button type="button" class="tab-btn" data-tab="pessoal">
+                <i class="fas fa-users"></i> Pessoal
+            </button>
+            <button type="button" class="tab-btn" data-tab="viaturas">
+                <i class="fas fa-truck"></i> Viaturas
+            </button>
+            <button type="button" class="tab-btn" data-tab="instalacoes">
+                <i class="fas fa-warehouse"></i> Instalações
+            </button>
+        </div>
+        
+        <!-- Aba 1: Dados Gerais -->
+        <div class="tab-content active" id="dados-gerais">
+            <div class="form-section">
+                <h2><i class="fas fa-building"></i> Dados Gerais do Órgão Provedor</h2>
+                
+                <div class="form-group">
+                    <label for="nome">Nome do Órgão Provedor *</label>
+                    {% if session.orgao_provedor and session.nivel_acesso != 'admin' %}
+                        <select id="nome" name="nome" class="form-control" disabled>
+                            <option value="{{ session.orgao_provedor }}">{{ session.orgao_provedor }}</option>
+                        </select>
+                        <input type="hidden" name="nome" value="{{ session.orgao_provedor }}">
+                        <small class="form-text text-muted">Você está vinculado a este Órgão Provedor; somente é permitido criar/editar este cadastro.</small>
+                    {% else %}
+                        <select id="nome" name="nome" required class="form-control" onchange="atualizarSiglaEDados(this)">
+                            <option value="">Selecione o órgão provedor...</option>
+                            <option value="1º DEPÓSITO DE SUPRIMENTO">1º DEPÓSITO DE SUPRIMENTO (1º D SUP)</option>
+                            <option value="2º BATALHÃO DE SUPRIMENTO">2º BATALHÃO DE SUPRIMENTO (2º B SUP)</option>
+                            <option value="3º BATALHÃO DE SUPRIMENTO">3º BATALHÃO DE SUPRIMENTO (3º B SUP)</option>
+                            <option value="4º DEPÓSITO DE SUPRIMENTO">4º DEPÓSITO DE SUPRIMENTO (4º D SUP)</option>
+                            <option value="5º BATALHÃO DE SUPRIMENTO">5º BATALHÃO DE SUPRIMENTO (5º B SUP)</option>
+                            <option value="6º DEPÓSITO DE SUPRIMENTO">6º DEPÓSITO DE SUPRIMENTO (6º D SUP)</option>
+                            <option value="7º DEPÓSITO DE SUPRIMENTO">7º DEPÓSITO DE SUPRIMENTO (7º D SUP)</option>
+                            <option value="8º BATALHÃO DE SUPRIMENTO DE SELVA">8º BATALHÃO DE SUPRIMENTO DE SELVA (8º B SUP SL)</option>
+                            <option value="9º BATALHÃO DE SUPRIMENTO">9º BATALHÃO DE SUPRIMENTO (9º B SUP)</option>
+                            <option value="10º DEPÓSITO DE SUPRIMENTO">10º DEPÓSITO DE SUPRIMENTO (10º D SUP)</option>
+                            <option value="11º DEPÓSITO DE SUPRIMENTO">11º DEPÓSITO DE SUPRIMENTO (11º D SUP)</option>
+                            <option value="12º BATALHÃO DE SUPRIMENTO">12º BATALHÃO DE SUPRIMENTO (12º B SUP)</option>
+                            <option value="1º BATALHÃO LOGÍSTICO DE SELVA">1º BATALHÃO LOGÍSTICO DE SELVA (1º B LOG SL)</option>
+                            <option value="17º BATALHÃO LOGÍSTICO DE SELVA">17º BATALHÃO LOGÍSTICO DE SELVA (17º B LOG SL)</option>
+                            <option value="16ª BASE LOGÍSTICA">16ª BASE LOGÍSTICA (16ª BA LOG)</option>
+                            <option value="DEPÓSITO DE SUBSISTÊNCIA DE SANTA MARIA">DEPÓSITO DE SUBSISTÊNCIA DE SANTA MARIA (DSSM)</option>
+                            <option value="DEPÓSITO DE SUBSISTÊNCIA DE SANTO ÂNGELO">DEPÓSITO DE SUBSISTÊNCIA DE SANTO ÂNGELO (DSSA)</option>
+                            <option value="DEPÓSITO CENTRAL DE MUNIÇÃO">DEPÓSITO CENTRAL DE MUNIÇÃO (DC MUN)</option>
+                            <option value="13ª COMPANHIA DEPÓSITO DE ARMAMENTO E MUNIÇÃO">13ª COMPANHIA DEPÓSITO DE ARMAMENTO E MUNIÇÃO (13ª CIA DAM)</option>
+                            <option value="BATALHÃO DE DOBRAGEM, MANUTENÇÃO DE PÁRA-QUEDAS E SUPRIMENTO PELO AR">BATALHÃO DE DOBRAGEM, MANUTENÇÃO DE PÁRA-QUEDAS E SUPRIMENTO PELO AR (B DOMPSA)</option>
+                            <option value="CENTRO LOGÍSTICO DE MÍSSEIS E FOGUETES">CENTRO LOGÍSTICO DE MÍSSEIS E FOGUETES (C LOG MSL FGT)</option>
+                        </select>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="sigla">Sigla *</label>
+                    <input type="text" id="sigla" name="sigla" class="form-control" required readonly>
+                    <small class="form-text">Preenchimento automático conforme seleção do órgão</small>
+                </div>
+                
+                <!-- CAMPOS UG E CODOM -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="unidade_gestora">Unidade Gestora (UG)</label>
+                        <input type="text" id="unidade_gestora" name="unidade_gestora" class="form-control" 
+                               placeholder="Será preenchido automaticamente" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="codom">CODOM</label>
+                        <input type="text" id="codom" name="codom" class="form-control" 
+                               placeholder="Será preenchido automaticamente" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Órgão Provedor das Classes</label>
+                    <div class="checkbox-grid">
+                        {% set classe_labels = ['I','II','III','V','VI','VII','VIII','IX','X'] %}
+                        {% for classe in classe_labels %}
+                            {% set cls_value = 'Classe ' ~ classe %}
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="classes_provedor" value="{{ cls_value }}" {% if edit_mode and orgao and cls_value in (orgao['classes_provedor'] or '') %}checked{% endif %}> {{ cls_value }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                    <small class="form-text text-muted">Selecione todas as classes que o OP atende. Pode marcar múltiplas opções.</small>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="om_licitacao_qs">OM que realiza processo licitatório do QS</label>
+                        <input type="text" id="om_licitacao_qs" name="om_licitacao_qs" class="form-control" 
+                                   placeholder="Ex: 1ª Região Militar" value="{{ orgao['om_licitacao_qs'] if edit_mode and orgao else '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="om_licitacao_qr">OM que realiza processo licitatório do QR</label>
+                        <input type="text" id="om_licitacao_qr" name="om_licitacao_qr" class="form-control" 
+                                   placeholder="Ex: 1ª Região Militar" value="{{ orgao['om_licitacao_qr'] if edit_mode and orgao else '' }}">
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="subordinacao">RM de vinculação *</label>
+                        <select id="subordinacao" name="subordinacao" required class="form-control">
+                            <option value="">Selecione a subordinação...</option>
+                            <option value="1ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='1ª RM' %}selected{% endif %}>1ª RM</option>
+                            <option value="2ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='2ª RM' %}selected{% endif %}>2ª RM</option>
+                            <option value="3ª Gpt Log" {% if edit_mode and orgao and orgao['subordinacao']=='3ª Gpt Log' %}selected{% endif %}>3ª Gpt Log</option>
+                            <option value="4ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='4ª RM' %}selected{% endif %}>4ª RM</option>
+                            <option value="5ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='5ª RM' %}selected{% endif %}>5ª RM</option>
+                            <option value="6ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='6ª RM' %}selected{% endif %}>6ª RM</option>
+                            <option value="7ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='7ª RM' %}selected{% endif %}>7ª RM</option>
+                            <option value="8º Gpt Log" {% if edit_mode and orgao and orgao['subordinacao']=='8º Gpt Log' %}selected{% endif %}>8º Gpt Log</option>
+                            <option value="9º Gpt Log" {% if edit_mode and orgao and orgao['subordinacao']=='9º Gpt Log' %}selected{% endif %}>9º Gpt Log</option>
+                            <option value="10ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='10ª RM' %}selected{% endif %}>10ª RM</option>
+                            <option value="11ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='11ª RM' %}selected{% endif %}>11ª RM</option>
+                            <option value="12ª RM" {% if edit_mode and orgao and orgao['subordinacao']=='12ª RM' %}selected{% endif %}>12ª RM</option>
+                            <option value="Ba Ap Log" {% if edit_mode and orgao and orgao['subordinacao']=='Ba Ap Log' %}selected{% endif %}>Ba Ap Log</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data_criacao">Data de Criação do OP</label>
+                        <input type="date" id="data_criacao" name="data_criacao" class="form-control" value="{{ orgao['data_criacao'] if edit_mode and orgao else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="missao">Missão</label>
+                    <textarea id="missao" name="missao" class="form-control" 
+                              rows="3" placeholder="Missão principal do órgão...">{{ orgao['missao'] if edit_mode and orgao else '' }}</textarea>
+                </div>
+
+                <!-- NOVO: SELEÇÃO DE OMs COM TABELAS DUPLAS -->
+                <div class="form-group">
+                    <label for="oms_que_apoia">OM que apoia *</label>
+                    
+                    <div class="oms-selection-container">
+                        <!-- Painel de seleção -->
+                        <div class="oms-panel">
+                            <div class="oms-panel-header">
+                                <h4><i class="fas fa-search"></i> Lista de OMs Disponíveis</h4>
+                                <div class="search-box">
+                                    <input type="text" id="search_oms" class="form-control" 
+                                           placeholder="Buscar OM..." onkeyup="filtrarOMsDisponiveis()">
+                                    <button type="button" class="btn-icon" onclick="limparBuscaOMs()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="oms-list-container">
+                                <table class="oms-table" id="omsDisponiveisTable">
+                                    <thead>
+                                        <tr>
+                                            <th width="30">
+                                                <input type="checkbox" id="selectAllOMs" onclick="toggleSelectAllOMs()">
+                                            </th>
+                                            <th>Sigla</th>
+                                            <th>Nome da OM</th>
+                                            <th>UG</th>
+                                            <th>CODOM</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for om_sigla, dados in DADOS_OMS.items() %}
+                                        <tr data-om="{{ om_sigla }}" 
+                                            data-ug="{{ dados.UG or '' }}" 
+                                            data-codom="{{ dados.CODOM or '' }}">
+                                            <td>
+                                                <input type="checkbox" class="om-checkbox" 
+                                                       data-om="{{ om_sigla }}"
+                                                       onchange="toggleOMSelection(this)">
+                                            </td>
+                                            <td><strong>{{ om_sigla }}</strong></td>
+                                            <td>{{ om_sigla }}</td>
+                                            <td>{{ dados.UG or '' }}</td>
+                                            <td>{{ dados.CODOM or '' }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="oms-panel-footer">
+                                <div class="oms-counter">
+                                    <span id="omsDisponiveisCount">{{ DADOS_OMS|length }}</span> OMs disponíveis
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="adicionarOMsSelecionadas()">
+                                    <i class="fas fa-arrow-right"></i> Adicionar Selecionadas
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Painel de selecionadas -->
+                        <div class="oms-panel">
+                            <div class="oms-panel-header">
+                                <h4><i class="fas fa-check-circle"></i> OMs Selecionadas</h4>
+                                <div class="selected-counter">
+                                    <span id="omsSelecionadasCount">0</span> OMs selecionadas
+                                </div>
+                            </div>
+                            
+                            <div class="oms-list-container">
+                                <table class="oms-table" id="omsSelecionadasTable">
+                                    <thead>
+                                        <tr>
+                                            <th width="30"></th>
+                                            <th>Sigla</th>
+                                            <th>Nome da OM</th>
+                                            <th>UG</th>
+                                            <th>CODOM</th>
+                                            <th width="50">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- OMs selecionadas serão adicionadas aqui dinamicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="oms-panel-footer">
+                                <button type="button" class="btn btn-danger btn-sm" onclick="removerTodasOMs()">
+                                    <i class="fas fa-trash"></i> Remover Todas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <small class="form-text">Selecione as OMs que apoia e transfira para a lista da direita</small>
+                </div>
+
+                <div id="classeIFields">
+                    <div class="form-group">
+                        <label for="efetivo">Efetivo que apoia com QS *</label>
+                        <input type="number" id="efetivo" name="efetivo" class="form-control"
+                               min="1" placeholder="Número de militares" value="{{ orgao['efetivo_atendimento'] if edit_mode and orgao else '' }}">
+                    </div>
+
+                    <h3 class="mt-4 mb-3"><i class="fas fa-chart-line"></i> Fatores de Consumo e Suprimento (toneladas/mês)</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="consumo_secos">Fator de Consumo Mensal de Secos (ton)</label>
+                            <input type="number" id="consumo_secos" name="consumo_secos"
+                                   class="form-control" step="0.01" min="0" placeholder="Ex: 50.5" value="{{ orgao['consumo_secos_mensal'] if edit_mode and orgao else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="consumo_frigorificados">Fator de Consumo Mensal de Frigorificados (ton)</label>
+                            <input type="number" id="consumo_frigorificados" name="consumo_frigorificados"
+                                   class="form-control" step="0.01" min="0" placeholder="Ex: 20.3" value="{{ orgao['consumo_frigorificados_mensal'] if edit_mode and orgao else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="suprimento_secos">Fator de Suprimento Mensal de Secos (ton)</label>
+                            <input type="number" id="suprimento_secos" name="suprimento_secos"
+                                   class="form-control" step="0.01" min="0" placeholder="Ex: 60.0" value="{{ orgao['suprimento_secos_mensal'] if edit_mode and orgao else '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="suprimento_frigorificados">Fator de Suprimento Mensal de Frigorificados (ton)</label>
+                            <input type="hidden" id="oms_que_apoia_selected" name="oms_que_apoia[]" value="{{ (orgao['historico'] if edit_mode and orgao else '') | e }}">
+                            <input type="number" id="suprimento_frigorificados" name="suprimento_frigorificados"
+                                   class="form-control" step="0.01" min="0" placeholder="Ex: 25.7" value="{{ orgao['suprimento_frigorificados_mensal'] if edit_mode and orgao else '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="capacidade_total_toneladas">Capacidade Total Frigo em Toneladas</label>
+                           <input type="number" id="capacidade_total_toneladas" name="capacidade_total_toneladas" 
+                               class="form-control" step="0.01" min="0" placeholder="Ex: 1000.00" value="{{ orgao['capacidade_total_toneladas'] if edit_mode and orgao else '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="capacidade_total_toneladas_seco">Capacidade Total Seco em Toneladas</label>
+                           <input type="number" id="capacidade_total_toneladas_seco" name="capacidade_total_toneladas_seco" 
+                               class="form-control" step="0.01" min="0" placeholder="Ex: 1000.00" value="{{ orgao['capacidade_total_toneladas_seco'] if edit_mode and orgao else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="area_edificavel">Área edificável disponível para construção de novas instalações (m²)</label>
+                           <input type="number" id="area_edificavel" name="area_edificavel" 
+                               class="form-control" step="0.01" min="0" placeholder="Ex: 500.00" value="{{ orgao['area_edificavel_disponivel'] if edit_mode and orgao else '' }}">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="foto_area_edificavel">Fotos da Área Edificável</label>
+                        <input type="file" id="foto_area_edificavel" name="foto_area_edificavel[]" 
+                               accept="image/*" class="form-control" multiple>
+                        <small class="form-text">Selecione múltiplas fotos (Ctrl+Click)</small>
+                        {% if edit_mode and preload_data and preload_data.fotos_area %}
+                        <div class="existing-photos mt-2">
+                            <div class="photo-grid">
+                                {% for foto in preload_data.fotos_area %}
+                                <div class="photo-item">
+                                    <button type="button" class="btn btn-sm btn-danger mb-1" onclick="deleteFotoAjax({{ foto.id }}, this)">Excluir</button>
+                                    <a href="{{ url_for('uploaded_file', filename=foto.caminho_arquivo) }}" target="_blank" rel="noopener">Abrir</a>
+                                    <img src="{{ url_for('uploaded_file', filename=foto.caminho_arquivo) }}" alt="Foto área edificável" class="info-image">
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba 2: Energia e Geradores -->
+        <div class="tab-content" id="energia-geradores">
+            <div class="form-section">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h2 class="mb-0"><i class="fas fa-bolt"></i> Energia Elétrica e Geradores</h2>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="dimensionamento_energia">Dimensionamento da Energia Elétrica *</label>
+                        <select id="dimensionamento_energia" name="dimensionamento_energia" required class="form-control">
+                            <option value="">Selecione...</option>
+                            <option value="adequado">Adequado</option>
+                            <option value="insuficiente">Insuficiente</option>
+                            <option value="precario">Precário</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="capacidade_total_kva">Capacidade Total do Sistema (KVA)</label>
+                        <input type="number" id="capacidade_total_kva" name="capacidade_total_kva" 
+                               class="form-control" step="0.1" min="0" placeholder="Ex: 150.0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="observacoes_energia">Observações sobre Energia Elétrica</label>
+                    <textarea id="observacoes_energia" name="observacoes_energia" class="form-control" 
+                              rows="3" placeholder="Descreva o sistema elétrico, condições, etc..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline" onclick="addGerador()">
+                        <i class="fas fa-plus"></i> Adicionar Gerador
+                    </button>
+                </div>
+                
+                <!-- Geradores -->
+                <div id="geradoresContainer" class="mt-4">
+                    <!-- Geradores serão adicionados dinamicamente aqui -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Aba 3: Pessoal -->
+        <div class="tab-content" id="pessoal">
+            <div class="form-section">
+                <h2><i class="fas fa-users"></i> Cadastro de Pessoal</h2>
+                <p class="mb-3">Cadastre o quantitativo de pessoal por postos e graduações</p>
+                
+                <!-- Nova matriz de Pessoal: quantitativos por posto e subdivisões por Arma/Quadro e Especialidade -->
+                <div id="pessoalMatrix">
+                    <div class="mb-2 small text-muted d-flex align-items-center">
+                        <span>Quantidades calculadas automaticamente</span>
+                        <span class="tooltip-info ml-2" data-tooltip="As quantidades totais são calculadas automaticamente a partir das especialidades adicionadas. Para cadastrar, clique em 'Adicionar Especialidade', selecione Arma/Quadro e informe a Quantidade."><i class="fas fa-info-circle"></i></span>
+                    </div>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Posto / Graduação</th>
+                                <th style="width:120px;">Quantidade</th>
+                                <th style="width:160px;">Tipo / Status</th>
+                                <th>Subdivisões (Arma / Especialidade)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% set postos = ['coronel','tenente_coronel','major','capitao','primeiro_tenente','segundo_tenente','subtenente','primeiro_sargento','segundo_sargento','terceiro_sargento','cabo','soldado'] %}
+                        {% for posto in postos %}
+                            <tr data-posto="{{ posto }}" data-posto-display="{{ get_posto_display(posto) }}">
+                                <td>{{ get_posto_display(posto) }}</td>
+                                <td>
+                                    <input type="number" min="0" value="0" class="form-control form-control-sm pessoa-total" data-posto="{{ posto }}" readonly title="Total calculado automaticamente">
+                                </td>
+                                <td>
+                                    {% if posto in ['coronel','tenente_coronel','major'] %}
+                                    <div>
+                                        <small class="text-muted">Serviço: Carreira</small>
+                                        <input type="hidden" class="pessoa-tipo" data-posto="{{ posto }}" value="carreira">
+                                        <small class="form-text text-muted mt-1">Adicione especialidades usando o botão em "Subdivisões" à direita.</small>
+                                    </div>
+                                    {% elif posto in ['primeiro_tenente','segundo_tenente','terceiro_sargento','capitao','segundo_sargento'] %}
+                                    {% set label_carreira = 'Aperfeiçoado' if posto in ['capitao','segundo_sargento'] else 'Carreira' %}
+                                    {% set label_temporario = 'Não aperfeiçoado' if posto in ['capitao','segundo_sargento'] else 'Temporário' %}
+                                    <div>
+                                        <div class="pessoal-type-box mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <label class="mr-3 mb-0" style="width:80px;">{{ label_carreira }}</label>
+                                                <input type="number" min="0" value="0" class="form-control form-control-sm pessoa-tipo-quantidade mr-2" data-posto="{{ posto }}" data-tipo="carreira" style="max-width:90px;">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="addEspecialidade('{{ posto }}','carreira')">Adicionar Especialidade</button>
+                                            </div>
+                                            <div id="pessoalGroup_{{ posto }}_carreira" class="tipo-rows mt-2 d-flex flex-nowrap"></div>
+                                        </div>
+
+                                        <div class="pessoal-type-box mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <label class="mr-3 mb-0" style="width:80px;">{{ label_temporario }}</label>
+                                                <input type="number" min="0" value="0" class="form-control form-control-sm pessoa-tipo-quantidade mr-2" data-posto="{{ posto }}" data-tipo="temporario" style="max-width:90px;">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary ml-2" onclick="addEspecialidade('{{ posto }}','temporario')">Adicionar Especialidade</button>
+                                            </div>
+                                            <div id="pessoalGroup_{{ posto }}_temporario" class="tipo-rows mt-2 d-flex flex-nowrap"></div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set postos_com_especialidade = ['coronel','tenente_coronel','major','capitao','primeiro_tenente','segundo_tenente','subtenente','primeiro_sargento','segundo_sargento','terceiro_sargento','cabo','soldado'] %}
+                                    {% set postos_with_tipo = ['primeiro_tenente','segundo_tenente','terceiro_sargento','capitao','segundo_sargento'] %}
+                                    {% if posto in postos_with_tipo %}
+                                        <div class="text-muted small">Subdivisões por tipo (use botões ao lado)</div>
+                                    {% elif posto in postos_com_especialidade %}
+                                        <div id="pessoalSubdiv_{{ posto }}" class="pessoal-subdiv d-flex flex-nowrap"></div>
+                                        <div class="small text-danger pessoa-erro" style="display:none;">Soma das especialidades não confere com total</div>
+                                        <button type="button" class="btn btn-sm btn-secondary mt-1" onclick="addEspecialidade('{{ posto }}')">Adicionar Especialidade</button>
+                                    {% else %}
+                                        <div class="text-muted small">Especialidade: não aplicável</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Template para linha de especialidade dentro de um posto -->
+                <template id="pessoalEspecialidadeTemplate">
+                  <div class="pessoal-especialidade-row form-row align-items-center mb-2">
+                    <div class="col-4 pr-1">
+                      <select class="form-control form-control-sm pessoa-arma">
+                        <option value="">-- Arma / Quadro --</option>
+                        {% for a in ARMA_QUADROS %}
+                          <option value="{{ a }}">{{ a }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-5 px-1">
+                      <select class="form-control form-control-sm pessoa-especialidade">
+                        <option value="">-- Especialidade / Serviço --</option>
+                        {% for s in ESPECIALIDADES %}
+                          <option value="{{ s }}">{{ s }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-2 px-1">
+                      <input type="number" min="0" class="form-control form-control-sm pessoa-quantidade" value="0">
+                    </div>
+                    <div class="col-auto pl-1">
+                      <button type="button" class="btn btn-sm btn-danger" onclick="removeEspecialidade(this)">Remover</button>
+                    </div>
+                  </div>
+                </template>
+
+                                <template id="sistemaTemplate">
+                                    <div class="sub-item mb-2 p-2 border rounded">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong>Sistema de Segurança</strong>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-light btn-sm collapse-btn" onclick="toggleCard(this)" aria-expanded="true"><span class="toggle-icon">−</span></button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeSubItem(this)">Remover</button>
+                                            </div>
+                                        </div>
+                                        <div class="collapsible-body">
+                                        <div class="form-grid mt-2">
+                                            <div class="form-group">
+                                                <label>Tipo</label>
+                                                <select data-field="sis-tipo" name="sistema_tipo_{{index}}_{{subIndex}}" id="sistema_tipo_{{index}}_{{subIndex}}" class="form-control">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="cftv">CFTV (câmeras)
+                                                    </option>
+                                                    <option value="alarme">Alarme perimetral/volumétrico</option>
+                                                    <option value="cerca_eletrica">Cerca elétrica</option>
+                                                    <option value="sensores">Sensores (PIR, magnéticos)</option>
+                                                    <option value="controle_acesso">Controle de acesso</option>
+                                                    <option value="iluminacao_emergencia">Iluminação de emergência</option>
+                                                    <option value="deteccao_incendio">Detecção/alarme de incêndio</option>
+                                                    <option value="brigada_incendio">Brigada/Equip. combate incêndio</option>
+                                                    <option value="monitoramento_remoto">Monitoramento remoto</option>
+                                                    <option value="outro">Outro</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Quantidade de Pontos/Câmeras</label>
+                                                <input data-field="sis-quantidade" type="number" name="sistema_quantidade_{{index}}_{{subIndex}}" id="sistema_quantidade_{{index}}_{{subIndex}}" class="form-control" min="0">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Situação</label>
+                                                <select data-field="sis-situacao" name="sistema_situacao_{{index}}_{{subIndex}}" id="sistema_situacao_{{index}}_{{subIndex}}" class="form-control">
+                                                    <option value="operacional">Operacional</option>
+                                                    <option value="em_manutencao">Em manutenção</option>
+                                                    <option value="inoperante">Inoperante</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                            <div class="form-group mt-2">
+                                            <label>Descrição / Observações</label>
+                                            <textarea data-field="sis-descricao" name="sistema_descricao_{{index}}_{{subIndex}}" id="sistema_descricao_{{index}}_{{subIndex}}" class="form-control" rows="2"></textarea>
+                                        </div>
+                                        </div><!-- end collapsible-body -->
+                                    </div>
+                                </template>
+
+                                <template id="equipamentoTemplate">
+                                    <div class="sub-item mb-2 p-2 border rounded">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong class="equipamento-title">Equipamento de Unitização</strong>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-light btn-sm collapse-btn" onclick="toggleCard(this)" aria-expanded="true"><span class="toggle-icon">−</span></button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeSubItem(this)">Remover</button>
+                                            </div>
+                                        </div>
+                                        <div class="collapsible-body">
+                                        <div class="form-grid mt-2">
+                                            <div class="form-group">
+                                                <label>Tipo</label>
+                                                <select data-field="eq-tipo" name="equipamento_tipo_{{index}}_{{subIndex}}" id="equipamento_tipo_{{index}}_{{subIndex}}" class="form-control">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="palete_madeira">Palete de madeira</option>
+                                                    <option value="palete_plastico">Palete de plástico</option>
+                                                    <option value="palete_metal">Palete metálico</option>
+                                                    <option value="contentor_grade">Contentor gradeado</option>
+                                                    <option value="contentor_fechado">Contentor fechado</option>
+                                                    <option value="contentor_ibas">Contentor IBC (líquidos)</option>
+                                                    <option value="caixa_plastica">Caixa plástica empilhável</option>
+                                                    <option value="gaiola_armazenagem">Gaiola/roll container</option>
+                                                    <option value="tamponamento_bag">Big bag / sacaria</option>
+                                                    <option value="gaveta_modular">Gaveta modular</option>
+                                                    <option value="rack_porta_pallet">Rack porta-palete</option>
+                                                    <option value="rack_movel">Rack móvel/desmontável</option>
+                                                    <option value="outro">Outro</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Capacidade (kg)</label>
+                                                <input data-field="eq-capacidade" type="number" step="0.1" min="0" name="equipamento_capacidade_{{index}}_{{subIndex}}" id="equipamento_capacidade_{{index}}_{{subIndex}}" class="form-control">
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Quantidade</label>
+                                                <input data-field="eq-quantidade" type="number" min="0" name="equipamento_quantidade_{{index}}_{{subIndex}}" id="equipamento_quantidade_{{index}}_{{subIndex}}" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="form-group mt-2">
+                                            <label>Observações</label>
+                                            <textarea data-field="eq-observacoes" name="equipamento_observacoes_{{index}}_{{subIndex}}" id="equipamento_observacoes_{{index}}_{{subIndex}}" class="form-control" rows="2"></textarea>
+                                        </div>
+                                        </div><!-- end collapsible-body -->
+                                    </div>
+                                </template>
+            </div>
+        </div>
+        
+        <!-- Aba 4: Viaturas -->
+        <div class="tab-content" id="viaturas">
+            <div class="form-section">
+                <h2><i class="fas fa-truck"></i> Frota de Viaturas</h2>
+                <p class="mb-3">Cadastre todas as viaturas da Organização Militar</p>
+                <div id="viaturasContainer">
+                    <!-- Viaturas serão adicionadas dinamicamente aqui -->
+                </div>
+                <button type="button" class="btn btn-outline" onclick="addViatura()">
+                    <i class="fas fa-plus"></i> Adicionar Viatura
+                </button>
+            </div>
+        </div>
+        
+        <!-- Aba 5: Instalações -->
+        <div class="tab-content" id="instalacoes">
+            <div class="form-section">
+                <h2><i class="fas fa-warehouse"></i> Instalações</h2>
+                <div id="instalacoesContainer">
+                    <!-- Instalações serão adicionadas dinamicamente aqui -->
+                </div>
+                <button type="button" class="btn btn-outline" onclick="addInstalacao()">
+                    <i class="fas fa-plus"></i> Adicionar Instalação
+                </button>
+
+                <!-- Templates completos para clonagem -->
+                <template id="instalacaoTemplate">
+                                    <div class="instalacao-card card mb-3" data-index="0">
+                                        <div class="instalacao-header d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <h4 class="mb-0">Instalação</h4>
+                                                <input type="text" name="instalacao_nome_0" id="instalacao_nome_0" class="form-control form-control-sm" placeholder="Nome ou identificação" style="max-width: 260px;">
+                                            </div>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-light btn-sm collapse-btn" onclick="toggleCard(this)" aria-expanded="true"><span class="toggle-icon">−</span></button>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-role="subitem-btn" onclick="addEmpilhadeira(0)" disabled><i class="fas fa-forklift"></i> Empilhadeira</button>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-role="subitem-btn" onclick="addSistemaSeguranca(0)" disabled><i class="fas fa-shield-alt"></i> Sistema</button>
+                                                <button type="button" class="btn btn-secondary btn-sm" data-role="subitem-btn" onclick="addEquipamentoUnitizacao(0)" disabled><i class="fas fa-boxes"></i> Equipamento</button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeInstalacao(this)">Remover</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="collapsible-body">
+                                        <div class="form-grid">
+                      <div class="form-group">
+                        <label for="tipo_instalacao_0">Tipo de Instalação</label>
+                        <select name="tipo_instalacao_0" id="tipo_instalacao_0" class="form-control">
+                          <option value="">Selecione...</option>
+                          <option value="deposito_cl1_seco">Depósito Cl I (Seco)</option>
+                          <option value="deposito_cl1_frigo">Depósito Cl I (Frigorificado)</option>
+                          <option value="deposito_cl2">Depósito Cl II</option>
+                          <option value="deposito_cl3">Depósito Cl III</option>
+                          <option value="deposito_cl4">Depósito Cl IV</option>
+                          <option value="deposito_cl5">Depósito Cl V</option>
+                          <option value="deposito_cl6">Depósito Cl VI</option>
+                          <option value="deposito_cl7">Depósito Cl VII</option>
+                          <option value="deposito_cl8">Depósito Cl VIII</option>
+                          <option value="deposito_cl9">Depósito Cl IX</option>
+                          <option value="deposito_cl10">Depósito Cl X</option>
+                          <option value="posto_combustivel">Posto de Combustível</option>
+                          <option value="posto_saude">Posto de Saúde</option>
+                          <option value="corpo_guard">Corpo da Guarda</option>
+                          <option value="pc_cmt">PC Cmt</option>
+                          <option value="secao_adm">Seção Administrativa</option>
+                          <option value="alojamento">Alojamento</option>
+                          <option value="aprovisionamento">Aprovisionamento</option>
+                          <option value="almoxarifado">Almoxarifado</option>
+                          <option value="garagem">Garagem</option>
+                          <option value="oficina_mecanica">Oficina Mecânica</option>
+                          <option value="oficina_eletrica">Oficina Elétrica</option>
+                          <option value="cozinha">Cozinha</option>
+                          <option value="refeitorio">Refeitório</option>
+                          <option value="cantina">Cantina</option>
+                          <option value="estacionamento">Estacionamento</option>
+                          <option value="torre_vigilancia">Torre de Vigilância</option>
+                          <option value="central_energia">Central de Energia</option>
+                          <option value="laboratorio">Laboratório</option>
+                          <option value="sala_reuniao">Sala de Reunião</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                                                <label for="capacidade_0">Capacidade (Ton)</label>
+                                                <input type="number" step="0.01" min="0" name="capacidade_0" id="capacidade_0" class="form-control" placeholder="Habilitado apenas para depósitos" disabled>
+                      </div>
+                    </div>
+
+                    <div class="form-grid">
+                      <div class="form-group">
+                        <label for="largura_0">Largura (m)</label>
+                        <input type="number" step="0.01" min="0" name="largura_0" id="largura_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="comprimento_0">Comprimento (m)</label>
+                        <input type="number" step="0.01" min="0" name="comprimento_0" id="comprimento_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="altura_0">Altura (m)</label>
+                        <input type="number" step="0.01" min="0" name="altura_0" id="altura_0" class="form-control">
+                      </div>
+                    </div>
+
+                    <div class="form-grid">
+                      <div class="form-group">
+                        <label for="data_construcao_0">Data Construção</label>
+                        <input type="date" name="data_construcao_0" id="data_construcao_0" class="form-control">
+                      </div>
+                                            <div class="form-group" id="tipoCoberturaGroup_0">
+                                                <label for="tipo_cobertura_0">Tipo de Cobertura</label>
+                                                <select name="tipo_cobertura_0" id="tipo_cobertura_0" class="form-control">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="laje">Laje</option>
+                                                    <option value="telha_metalica">Telha metálica</option>
+                                                    <option value="telha_fibrocimento">Telha de fibrocimento</option>
+                                                    <option value="telha_ceramica">Telha cerâmica</option>
+                                                    <option value="telha_termica">Telha térmica (sandwich)</option>
+                                                    <option value="outro">Outro</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group" id="verticalizacaoGroup_0" style="display:none;">
+                                                <label for="verticalizacao_0">Verticalização</label>
+                                                <select name="verticalizacao_0" id="verticalizacao_0" class="form-control">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="nao_verticalizado">Não verticalizado</option>
+                                                    <option value="porta_pallets">Porta-paletes</option>
+                                                    <option value="estanteria_simples">Estanteria simples</option>
+                                                    <option value="estanteria_dupla">Estanteria dupla</option>
+                                                    <option value="drive_in">Drive-in</option>
+                                                    <option value="mezzanino">Mezanino</option>
+                                                    <option value="outro">Outro</option>
+                                                </select>
+                                            </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="descricao_0">Descrição</label>
+                      <textarea name="descricao_0" id="descricao_0" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="instalacao_fotos_0">Fotos da Instalação</label>
+                      <input type="file" id="instalacao_fotos_0" name="instalacao_fotos_0[]" accept="image/*" multiple onchange="previewImage(this, 'instalacaoPreview0')" class="form-control">
+                      <div id="instalacaoPreview0" class="image-preview mt-2"></div>
+                    </div>
+
+                                        <!-- Sub-items containers -->
+                                        <div id="depositoSubsecoes_0" style="display:none;">
+                                            <div id="empilhadeirasContainer0"></div>
+                                            <div id="sistemasContainer0"></div>
+                                            <div id="equipamentosContainer0"></div>
+                                        </div>
+
+                    <!-- Hidden counters -->
+                                        <input type="hidden" id="empilhadeiras_count_0" name="empilhadeiras_count_0" value="0">
+                                        <input type="hidden" id="sistemas_count_0" name="sistemas_count_0" value="0">
+                                        <input type="hidden" id="equipamentos_count_0" name="equipamentos_count_0" value="0">
+                                        </div><!-- end collapsible-body -->
+                                    </div>
+                </template>
+
+                <template id="empilhadeiraTemplate">
+                                    <div class="sub-item mb-2 p-2 border rounded">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong class="empilhadeira-title">Empilhadeira</strong>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-light btn-sm collapse-btn" onclick="toggleCard(this)" aria-expanded="true"><span class="toggle-icon">−</span></button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeSubItem(this)">Remover</button>
+                                            </div>
+                                        </div>
+                                        <div class="collapsible-body">
+                                        <div class="form-grid mt-2">
+                                            <div class="form-group">
+                                                <label>Tipo</label>
+                                                <select data-field="emp-tipo" name="empilhadeira_tipo_{{index}}_{{subIndex}}" id="empilhadeira_tipo_{{index}}_{{subIndex}}" class="form-control">
+                                                    <option value="">Selecione...</option>
+                                                    <option value="eletrica_retratil">Elétrica retrátil</option>
+                                                    <option value="eletrica_contrapeso">Elétrica contrapeso</option>
+                                                    <option value="eletrica_paleteira">Paleteira elétrica (walkie/rider)</option>
+                                                    <option value="eletrica_order_picker">Order picker elétrico</option>
+                                                    <option value="eletrica_trilaterais">Trilaterais/Very Narrow Aisle (VNA)</option>
+                                                    <option value="combustao_glp">Combustão GLP</option>
+                                                    <option value="combustao_diesel">Combustão diesel</option>
+                                                    <option value="combustao_gasolina">Combustão gasolina</option>
+                                                    <option value="todo_terreno">Todo-terreno</option>
+                                                    <option value="reach_stacker">Reach stacker / empilhadeira pórtico</option>
+                                                    <option value="transpalete_manual">Transpalete manual</option>
+                                                    <option value="outro">Outro</option>
+                                                </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Capacidade (kg)</label>
+                        <input data-field="emp-capacidade" type="number" name="empilhadeira_capacidade_{{index}}_{{subIndex}}" id="empilhadeira_capacidade_{{index}}_{{subIndex}}" class="form-control" step="0.1">
+                      </div>
+                      <div class="form-group">
+                        <label>Quantidade</label>
+                        <input data-field="emp-quantidade" type="number" name="empilhadeira_quantidade_{{index}}_{{subIndex}}" id="empilhadeira_quantidade_{{index}}_{{subIndex}}" class="form-control" min="0">
+                      </div>
+                      <div class="form-group">
+                        <label>Ano Fabricação</label>
+                        <input data-field="emp-ano" type="number" name="empilhadeira_ano_{{index}}_{{subIndex}}" id="empilhadeira_ano_{{index}}_{{subIndex}}" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label>Situação</label>
+                        <select data-field="emp-situacao" name="empilhadeira_situacao_{{index}}_{{subIndex}}" id="empilhadeira_situacao_{{index}}_{{subIndex}}" class="form-control">
+                            <option value="">-- Selecione --</option>
+                            <option value="disponivel">Disponível</option>
+                            <option value="indisponivel_recuperavel">Indisponível recuperável</option>
+                            <option value="indisponivel">Indisponível</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label>Valor Recuperação</label>
+                        <input data-field="emp-valor" type="number" step="0.01" name="empilhadeira_valor_recuperacao_{{index}}_{{subIndex}}" id="empilhadeira_valor_recuperacao_{{index}}_{{subIndex}}" class="form-control">
+                      </div>
+                    </div>
+                                        <div class="form-group mt-2">
+                                            <label>Fotos</label>
+                                            <input data-field="emp-fotos" type="file" name="empilhadeira_fotos_{{index}}_{{subIndex}}[]" id="empilhadeira_fotos_{{index}}_{{subIndex}}" accept="image/*" multiple onchange="previewImage(this, 'empilhadeiraPreview{{index}}_{{subIndex}}')" class="form-control">
+                                            <div id="empilhadeiraPreview{{index}}_{{subIndex}}" class="image-preview mt-2"></div>
+                                        </div>
+                                        </div><!-- end collapsible-body -->
+                                    </div>
+                </template>
+
+                <template id="geradorTemplate">
+                  <div class="gerador-card card mb-2">
+                    <div class="gerador-header d-flex justify-content-between align-items-center">
+                      <h4>Gerador <span class="gerador-numero">1</span></h4>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-light btn-sm collapse-btn" onclick="toggleCard(this)" aria-expanded="true"><span class="toggle-icon">−</span></button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeGerador(this)">Remover</button>
+                                            </div>
+                    </div>
+                                        <div class="collapsible-body">
+                                            <div class="form-grid mt-2">
+                                                <div class="form-group">
+                                                    <label for="gerador_capacidade_0">Capacidade (KVA)</label>
+                                                    <input type="number" step="0.1" min="0" name="gerador_capacidade_0" id="gerador_capacidade_0" class="form-control">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="gerador_marca_0">Marca/Modelo</label>
+                                                    <input type="text" name="gerador_marca_0" id="gerador_marca_0" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="form-grid">
+                                                <div class="form-group">
+                                                    <label for="gerador_ano_0">Ano Fabricação</label>
+                                                    <input type="number" name="gerador_ano_0" id="gerador_ano_0" class="form-control" min="1900" max="2100">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Pode operar 24h?</label>
+                                                    <div>
+                                                        <label><input type="checkbox" name="gerador_24h_0" id="gerador_24h_0" value="1"> Sim</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="gerador_situacao_0">Situação</label>
+                                                <select name="gerador_situacao_0" id="gerador_situacao_0" class="form-control" onchange="handleSituacaoChange(this, 0, 'gerador')">
+                                                    <option value="operacional">Operacional</option>
+                                                    <option value="em_manutencao">Em manutenção</option>
+                                                    <option value="baixada">Baixada</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group d-none" id="gerador_valor_recuperacao_group_0">
+                                                <label for="gerador_valor_recuperacao_0">Valor de Recuperação (R$)</label>
+                                                <input type="number" step="0.01" min="0" name="gerador_valor_recuperacao_0" id="gerador_valor_recuperacao_0" class="form-control" placeholder="Valor em R$">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="gerador_horas_0">Horas operação contínuas</label>
+                                                <input type="number" name="gerador_horas_0" id="gerador_horas_0" class="form-control">
+                                            </div>
+                                            <div class="form-grid">
+                                                <div class="form-group">
+                                                    <label for="gerador_ultima_manutencao_0">Última Manutenção</label>
+                                                    <input type="date" name="gerador_ultima_manutencao_0" id="gerador_ultima_manutencao_0" class="form-control">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="gerador_proxima_manutencao_0">Próxima Manutenção</label>
+                                                    <input type="date" name="gerador_proxima_manutencao_0" id="gerador_proxima_manutencao_0" class="form-control">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="gerador_observacoes_0">Observações</label>
+                                                <textarea name="gerador_observacoes_0" id="gerador_observacoes_0" class="form-control" rows="2"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="gerador_fotos_0">Fotos do Gerador</label>
+                                                <input type="file" name="gerador_fotos_0[]" id="gerador_fotos_0" accept="image/*" multiple onchange="previewImage(this, 'geradorPreview0')" class="form-control">
+                                                <div id="geradorPreview0" class="image-preview mt-2"></div>
+                                            </div>
+                                        </div>
+                  </div>
+                </template>
+
+                <template id="pessoalTemplate">
+                  <div class="pessoal-card card mb-2">
+                    <div class="pessoal-header d-flex justify-content-between align-items-center">
+                      <h4>Pessoal <span class="pessoal-numero">1</span></h4>
+                      <button type="button" class="btn btn-danger btn-sm" onclick="removePessoal(this)">Remover</button>
+                    </div>
+                    <div class="form-grid mt-2">
+                      <div class="form-group">
+                        <label for="pessoal_posto_0">Posto/Grad</label>
+                        <input type="text" name="pessoal_posto_0" id="pessoal_posto_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="pessoal_arma_0">Arma/Quadro</label>
+                        <input type="text" name="pessoal_arma_0" id="pessoal_arma_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="pessoal_especialidade_0">Especialidade</label>
+                        <input type="text" name="pessoal_especialidade_0" id="pessoal_especialidade_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="pessoal_funcao_0">Função</label>
+                        <input type="text" name="pessoal_funcao_0" id="pessoal_funcao_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="pessoal_tipo_0">Tipo Serviço</label>
+                        <select name="pessoal_tipo_0" id="pessoal_tipo_0" class="form-control">
+                          <option value="carreira">Carreira</option>
+                          <option value="temporario">Temporário</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="pessoal_quantidade_0">Quantidade</label>
+                        <input type="number" name="pessoal_quantidade_0" id="pessoal_quantidade_0" class="form-control" min="0" value="0">
+                      </div>
+                      <div class="form-group">
+                        <label for="pessoal_observacoes_0">Observações</label>
+                        <input type="text" name="pessoal_observacoes_0" id="pessoal_observacoes_0" class="form-control">
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <template id="viaturaTemplate">
+                                    <div class="viatura-card card mb-2">
+                                        <div class="viatura-header d-flex justify-content-between align-items-center">
+                                              <h4 class="mb-0">Viatura <span class="viatura-label text-muted">EB da viatura</span></h4>
+                                            <div class="d-flex align-items-center gap-1">
+                                                <button type="button" class="btn btn-light btn-sm collapse-btn" onclick="toggleCard(this)" aria-expanded="true"><span class="toggle-icon">−</span></button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeViatura(this)">Remover</button>
+                                            </div>
+                                        </div>
+                                        <div class="collapsible-body">
+                                        <div class="form-grid mt-2">
+                      <div class="form-group">
+                        <label for="viatura_eb_0">EB (código interno)</label>
+                        <input type="text" name="viatura_eb_0" id="viatura_eb_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_tipo_0">Tipo</label>
+                        <select name="viatura_tipo_0" id="viatura_tipo_0" class="form-control" onchange="handleTipoChange(this, 0)">
+                          <option value="VTNE">VTNE</option>
+                          <option value="VTE">VTE</option>
+                        </select>
+                      </div>
+                      <div class="form-group d-none" id="viatura_especializacao_group_0">
+                        <label for="viatura_especializacao_0">Especialização (VTE)</label>
+                        <select name="viatura_especializacao_0" id="viatura_especializacao_0" class="form-control">
+                          <option value="">Selecione...</option>
+                          <option value="Baú seco">Baú seco</option>
+                          <option value="Baú frigorificado">Baú frigorificado</option>
+                          <option value="Cisterna Água">Cisterna Água</option>
+                          <option value="Cisterna Combustível">Cisterna Combustível</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_marca_0">Marca</label>
+                        <select name="viatura_marca_0" id="viatura_marca_0" class="form-control" onchange="populateModelos(this, 0)">
+                          <option value="">Selecione marca</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_modelo_0">Modelo</label>
+                        <select name="viatura_modelo_0" id="viatura_modelo_0" class="form-control">
+                          <option value="">Selecione modelo</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_ano_0">Ano Fabricação</label>
+                        <input type="number" name="viatura_ano_0" id="viatura_ano_0" class="form-control">
+                      </div>
+                    </div>
+                    <div class="form-grid">
+                      <div class="form-group">
+                        <label for="viatura_capacidade_0">Capacidade Carga (kg)</label>
+                        <input type="number" step="0.01" name="viatura_capacidade_0" id="viatura_capacidade_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_lotacao_0">Lotação (pessoas)</label>
+                        <input type="number" name="viatura_lotacao_0" id="viatura_lotacao_0" class="form-control" min="0">
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_km_0">KM Atual</label>
+                        <input type="number" name="viatura_km_0" id="viatura_km_0" class="form-control">
+                      </div>
+                    </div>
+                    <div class="form-grid">
+                      <div class="form-group">
+                        <label for="viatura_ultima_manutencao_0">Última Manutenção</label>
+                        <input type="date" name="viatura_ultima_manutencao_0" id="viatura_ultima_manutencao_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_proxima_manutencao_0">Próxima Manutenção</label>
+                        <input type="date" name="viatura_proxima_manutencao_0" id="viatura_proxima_manutencao_0" class="form-control">
+                      </div>
+                      <div class="form-group">
+                        <label for="viatura_patrimonio_0">Patrimônio</label>
+                        <input type="text" name="viatura_patrimonio_0" id="viatura_patrimonio_0" class="form-control">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="viatura_situacao_0">Situação</label>
+                      <select name="viatura_situacao_0" id="viatura_situacao_0" class="form-control" onchange="handleSituacaoChange(this, 0, 'viatura')">
+                        <option value="operacional">Operacional</option>
+                        <option value="em_manutencao">Em manutenção</option>
+                        <option value="baixada">Baixada</option>
+                      </select>
+                    </div>
+                    <div class="form-group d-none" id="viatura_valor_recuperacao_group_0">
+                      <label for="viatura_valor_recuperacao_0">Valor de Recuperação (R$)</label>
+                      <input type="number" step="0.01" min="0" name="viatura_valor_recuperacao_0" id="viatura_valor_recuperacao_0" class="form-control" placeholder="Valor em R$">
+                    </div>
+                    <div class="form-group">
+                      <label for="viatura_observacoes_0">Observações</label>
+                      <textarea name="viatura_observacoes_0" id="viatura_observacoes_0" class="form-control" rows="2"></textarea>
+                    </div>
+                                        <div class="form-group">
+                                            <label for="viatura_fotos_0">Fotos da Viatura</label>
+                                            <input type="file" name="viatura_fotos_0[]" id="viatura_fotos_0" accept="image/*" multiple onchange="previewImage(this, 'viaturaPreview0')" class="form-control">
+                                            <div id="viaturaPreview0" class="image-preview mt-2"></div>
+                                        </div>
+                                        </div><!-- end collapsible-body -->
+                                    </div>
+                </template>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegação entre abas -->
+    <div class="tab-navigation">
+        <button type="button" class="btn btn-outline" id="prevTabBtn" onclick="navegarAba('prev')">
+            <i class="fas fa-arrow-left"></i> Anterior
+        </button>
+        <div class="tab-indicators">
+            <span class="tab-indicator active" data-tab="dados-gerais">1</span>
+            <span class="tab-indicator" data-tab="energia-geradores">2</span>
+            <span class="tab-indicator" data-tab="pessoal">3</span>
+            <span class="tab-indicator" data-tab="viaturas">4</span>
+            <span class="tab-indicator" data-tab="instalacoes">5</span>
+        </div>
+        <button type="button" class="btn btn-outline" id="nextTabBtn" onclick="navegarAba('next')">
+            Próximo <i class="fas fa-arrow-right"></i>
+        </button>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Finalizar Cadastro
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Configuração das abas
+const abas = ['dados-gerais', 'energia-geradores', 'pessoal', 'viaturas', 'instalacoes'];
+let abaAtual = 0;
+
+// Mapeamento de nomes para siglas
+const siglasMap = {
+    "1º DEPÓSITO DE SUPRIMENTO": "1º D SUP",
+    "2º BATALHÃO DE SUPRIMENTO": "2º B SUP",
+    "3º BATALHÃO DE SUPRIMENTO": "3º B SUP",
+    "4º DEPÓSITO DE SUPRIMENTO": "4º D SUP",
+    "5º BATALHÃO DE SUPRIMENTO": "5º B SUP",
+    "6º DEPÓSITO DE SUPRIMENTO": "6º D SUP",
+    "7º DEPÓSITO DE SUPRIMENTO": "7º D SUP",
+    "8º BATALHÃO DE SUPRIMENTO DE SELVA": "8º B SUP SL",
+    "9º BATALHÃO DE SUPRIMENTO": "9º B SUP",
+    "10º DEPÓSITO DE SUPRIMENTO": "10º D SUP",
+    "11º DEPÓSITO DE SUPRIMENTO": "11º D SUP",
+    "12º BATALHÃO DE SUPRIMENTO": "12º B SUP",
+    "1º BATALHÃO LOGÍSTICO DE SELVA": "1º B LOG SL",
+    "17º BATALHÃO LOGÍSTICO DE SELVA": "17º B LOG SL",
+    "16ª BASE LOGÍSTICA": "16ª BA LOG",
+    "DEPÓSITO DE SUBSISTÊNCIA DE SANTA MARIA": "DSSM",
+    "DEPÓSITO DE SUBSISTÊNCIA DE SANTO ÂNGELO": "DSSA",
+    "DEPÓSITO CENTRAL DE MUNIÇÃO": "DC MUN",
+    "13ª COMPANHIA DEPÓSITO DE ARMAMENTO E MUNIÇÃO": "13ª CIA DAM",
+    "CENTRO LOGÍSTICO DE MÍSSEIS E FOGUETES": "C LOG MSL FGT",
+    "BATALHÃO DE DOBRAGEM, MANUTENÇÃO DE PÁRA-QUEDAS E SUPRIMENTO PELO AR": "B DOMPSA"
+};
+
+// Armazenamento das OMs selecionadas
+let omsSelecionadas = [];
+
+// Escapa valores para uso seguro em seletores CSS
+function escapeSelector(value) {
+    if (window.CSS && CSS.escape) return CSS.escape(value);
+    return (value || '').replace(/([ #;?%&,.+*~':"!^$\[\]()=>|/@])/g, '\\$1');
+}
+
+// Limpa seleção de OMs sem confirmação (para preenchimento automático)
+function limparOMsSelecionadasSilencioso() {
+    omsSelecionadas.forEach(om => {
+        const linha = document.querySelector(`#omsDisponiveisTable tr[data-om="${escapeSelector(om)}"]`);
+        const checkbox = linha ? linha.querySelector('.om-checkbox') : null;
+        if (checkbox) {
+            checkbox.disabled = false;
+            checkbox.checked = false;
+        }
+    });
+
+    const tbody = document.querySelector('#omsSelecionadasTable tbody');
+    if (tbody) tbody.innerHTML = '';
+
+    omsSelecionadas = [];
+    atualizarContadorOMs();
+    atualizarOMsSelecionadasInput();
+
+    const selectAll = document.getElementById('selectAllOMs');
+    if (selectAll) selectAll.checked = false;
+}
+
+// Preenche seleção de OMs a partir de string (modo edição)
+function preencherOMsSelecionadas(historicoStr) {
+    if (!historicoStr) return;
+    limparOMsSelecionadasSilencioso();
+    const itens = historicoStr.split(',').map(s => s.trim()).filter(Boolean);
+    itens.forEach(om => {
+        if (!omsSelecionadas.includes(om)) {
+            omsSelecionadas.push(om);
+            const linha = document.querySelector(`#omsDisponiveisTable tr[data-om="${escapeSelector(om)}"]`);
+            let sigla = om, nome = om, ug = '', codom = '';
+            if (linha) {
+                sigla = linha.cells[1].textContent;
+                nome = linha.cells[2].textContent;
+                ug = linha.cells[3].textContent;
+                codom = linha.cells[4].textContent;
+                const cb = linha.querySelector('.om-checkbox');
+                if (cb) cb.disabled = true;
+            }
+            adicionarOMSelecionadaTabela(om, sigla, nome, ug, codom);
+        }
+    });
+    atualizarContadorOMs();
+    atualizarOMsSelecionadasInput();
+}
+
+// Função para inicializar quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar navegação por abas
+    configurarAbas();
+    
+    // Restaurar aba selecionada anteriormente, se existir
+    try {
+        const saved = parseInt(localStorage.getItem('cadastro_aba_atual'));
+        if (!isNaN(saved) && saved >= 0 && saved < abas.length) {
+            mudarAba(saved);
+        }
+    } catch (e) { /* ignore */ }
+
+    // Inicializar contador de OMs disponíveis
+    atualizarContadorOMs();
+
+    // Se já houver um órgão selecionado ao carregar, acionar preenchimento automático
+    try {
+        const nomeSelect = document.getElementById('nome');
+        if (nomeSelect && nomeSelect.value) {
+            atualizarSiglaEDados(nomeSelect);
+        }
+    } catch (e) {
+        console.error('Erro ao preencher dados iniciais automaticamente:', e);
+    }
+
+    // Calcular fatores de suprimento ao carregar se já houver efetivo
+    try {
+        calcularSuprimentoAutomatico();
+    } catch (e) { /* ignore */ }
+
+    // Recalcular suprimento sempre que o efetivo for alterado manualmente
+    const efetivoInput = document.getElementById('efetivo');
+    if (efetivoInput) {
+        efetivoInput.addEventListener('input', calcularSuprimentoAutomatico);
+        efetivoInput.addEventListener('change', calcularSuprimentoAutomatico);
+    }
+});
+
+// Função para configurar abas
+function configurarAbas() {
+    // Event listeners para botões das abas
+    document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            mudarAba(index);
+        });
+    });
+    
+    // Atualizar navegação inicial
+    atualizarNavegacaoAbas();
+}
+
+// Função para mudar de aba
+function dadosGeraisPreenchidos() {
+    if (window.EDIT_MODE) return true;
+    const nome = document.getElementById('nome') ? document.getElementById('nome').value.trim() : '';
+    const subordinacao = document.getElementById('subordinacao') ? document.getElementById('subordinacao').value.trim() : '';
+    return nome !== '' && subordinacao !== '';
+}
+
+function mudarAba(index) {
+    if (index >= 0 && index < abas.length) {
+        // Se o usuário tentar abrir uma aba além dos dados gerais sem o preenchimento
+        if (index > 0 && !dadosGeraisPreenchidos()) {
+            alert('Por favor, preencha os Dados Gerais (Nome e Subordinação) antes de acessar as outras abas.');
+            return;
+        }
+        // Esconder todas as abas
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Remover classe active de todos os botões
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Remover classe active de todos os indicadores
+        document.querySelectorAll('.tab-indicator').forEach(indicator => {
+            indicator.classList.remove('active');
+        });
+        
+        // Mostrar aba selecionada
+        const abaId = abas[index];
+        document.getElementById(abaId).classList.add('active');
+        document.querySelector(`.tab-btn[data-tab="${abaId}"]`).classList.add('active');
+        document.querySelector(`.tab-indicator[data-tab="${abaId}"]`).classList.add('active');
+        
+        // Atualizar variável de controle
+        abaAtual = index;
+
+        // Persistir aba selecionada para restaurar depois
+        try {
+            localStorage.setItem('cadastro_aba_atual', index);
+        } catch (e) { /* ignore */ }
+        
+        // Atualizar navegação
+        atualizarNavegacaoAbas();
+    }
+}
+
+// Função para navegar entre abas
+function navegarAba(direcao) {
+    if (direcao === 'next' && abaAtual < abas.length - 1) {
+        mudarAba(abaAtual + 1);
+    } else if (direcao === 'prev' && abaAtual > 0) {
+        mudarAba(abaAtual - 1);
+    }
+}
+
+// Função para atualizar navegação entre abas
+function atualizarNavegacaoAbas() {
+    const prevBtn = document.getElementById('prevTabBtn');
+    const nextBtn = document.getElementById('nextTabBtn');
+    const dadosOk = dadosGeraisPreenchidos();
+    
+    // Atualizar botão anterior
+    if (abaAtual === 0) {
+        prevBtn.disabled = true;
+        prevBtn.style.opacity = '0.5';
+        prevBtn.style.cursor = 'not-allowed';
+    } else {
+        prevBtn.disabled = false;
+        prevBtn.style.opacity = '1';
+        prevBtn.style.cursor = 'pointer';
+    }
+    
+    // Atualizar botão próximo
+    if (abaAtual === abas.length - 1) {
+        nextBtn.disabled = true;
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+    } else {
+        nextBtn.disabled = false;
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+    }
+
+    // Desabilitar visualmente botões de aba além da primeira se Dados Gerais não preenchidos
+    document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        if (idx > 0 && !dadosOk) {
+            btn.classList.add('disabled');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        } else {
+            btn.classList.remove('disabled');
+            btn.disabled = false;
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+        }
+    });
+}
+
+// Função para atualizar sigla e buscar UG/CODOM via AJAX
+async function atualizarSiglaEDados(selectElement) {
+    const nomeSelecionado = selectElement.value;
+    const siglaInput = document.getElementById('sigla');
+    const ugInput = document.getElementById('unidade_gestora');
+    const codomInput = document.getElementById('codom');
+    
+    if (nomeSelecionado && siglasMap[nomeSelecionado]) {
+        const sigla = siglasMap[nomeSelecionado];
+        siglaInput.value = sigla;
+        
+        // Limpar os campos de UG e CODOM
+        ugInput.value = '';
+        codomInput.value = '';
+        
+        // Buscar UG e CODOM via AJAX
+        try {
+            const response = await fetch(`/api/buscar_ug_codom?sigla=${encodeURIComponent(sigla)}`);
+            const dados = await response.json();
+            
+            if (dados.UG) {
+                ugInput.value = dados.UG;
+            }
+            if (dados.CODOM) {
+                codomInput.value = dados.CODOM;
+                // buscar subordinação automaticamente se disponível
+                try {
+                    fetch(`/api/buscar_subordinacao?codom=${encodeURIComponent(dados.CODOM)}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.subordinacao) {
+                                setSubordinacaoValue(data.subordinacao);
+                            }
+                        }).catch(e => console.error('Erro buscando subordinacao:', e));
+                } catch (err) {
+                    console.error('Erro ao buscar subordinacao:', err);
+                }
+            }
+
+            // Preencher OMs e efetivo automaticamente com base na planilha Dados.xlsx
+            preencherDadosAutomaticos(sigla);
+        } catch (error) {
+            console.error('Erro ao buscar UG/CODOM:', error);
+        }
+    } else {
+        siglaInput.value = '';
+        ugInput.value = '';
+        codomInput.value = '';
+        try { atualizarNavegacaoAbas(); } catch (e) { /* ignore */ }
+    }
+}
+
+// Buscar subordinacao por CODOM e setar select
+async function buscarSubordinacaoPorCodom(codom) {
+    try {
+        const response = await fetch(`/api/buscar_subordinacao?codom=${encodeURIComponent(codom)}`);
+        const data = await response.json();
+        if (data && data.subordinacao) setSubordinacaoValue(data.subordinacao);
+    } catch (error) {
+        console.error('Erro ao buscar subordinacao:', error);
+    }
+}
+
+// Define o value do select de subordinacao, adicionando opção se necessário
+function setSubordinacaoValue(value) {
+    const sel = document.getElementById('subordinacao');
+    if (!sel) return;
+    // Procurar option existente
+    let opt = Array.from(sel.options).find(o => o.value === value);
+    if (!opt) {
+        opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = value;
+        sel.appendChild(opt);
+    }
+    sel.value = value;
+
+    // Atualizar estado das abas quando preenchido automaticamente
+    try { atualizarNavegacaoAbas(); } catch (e) { /* ignore */ }
+}
+
+// Seleciona OMs automaticamente a partir da lista retornada pela API
+function selecionarOMsAutomaticamente(listaOMs) {
+    if (!Array.isArray(listaOMs) || listaOMs.length === 0) return;
+
+    limparOMsSelecionadasSilencioso();
+
+    const unicas = [...new Set(listaOMs.map(om => (om || '').trim()).filter(Boolean))];
+    unicas.forEach(om => {
+        const linha = document.querySelector(`#omsDisponiveisTable tr[data-om="${escapeSelector(om)}"]`);
+        const checkbox = linha ? linha.querySelector('.om-checkbox') : null;
+        if (checkbox && !checkbox.disabled) {
+            checkbox.checked = true;
+        } else if (!linha) {
+            console.warn('OM não encontrada para seleção automática:', om);
+        }
+    });
+
+    adicionarOMsSelecionadas();
+}
+
+// Obtém dados automáticos (subordinação, OMs e efetivo) com base em Dados.xlsx
+async function preencherDadosAutomaticos(siglaOP) {
+    if (!siglaOP) return;
+    try {
+        const resp = await fetch(`/api/op/dados_automaticos?sigla_op=${encodeURIComponent(siglaOP)}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        if (data && (data.rm || data.subordinacao)) {
+            setSubordinacaoValue(data.rm || data.subordinacao);
+            try { atualizarNavegacaoAbas(); } catch (e) { /* ignore */ }
+        }
+
+        if (data && Array.isArray(data.oms_apoiadas) && data.oms_apoiadas.length) {
+            selecionarOMsAutomaticamente(data.oms_apoiadas);
+        }
+
+        if (data && typeof data.efetivo_total === 'number' && !Number.isNaN(data.efetivo_total)) {
+            const efetivoInput = document.getElementById('efetivo');
+            if (efetivoInput) {
+                efetivoInput.value = data.efetivo_total;
+                calcularSuprimentoAutomatico();
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao preencher dados automáticos:', error);
+    }
+}
+
+// Calcula fatores de suprimento automaticamente a partir do efetivo (QS)
+function calcularSuprimentoAutomatico() {
+    const efetivoInput = document.getElementById('efetivo');
+    if (!efetivoInput) return;
+    const val = parseFloat((efetivoInput.value || '').toString().replace(',', '.'));
+    if (Number.isNaN(val) || val <= 0) return;
+
+    const suprimentoFrig = document.getElementById('suprimento_frigorificados');
+    const suprimentoSecos = document.getElementById('suprimento_secos');
+
+    // Fórmulas fornecidas: efetivo * 0,000400 * 22 para frigorificados; efetivo * 0,000550 * 22 para secos
+    const frigValor = val * 0.0004 * 22;
+    const secosValor = val * 0.00055 * 22;
+
+    if (suprimentoFrig) {
+        suprimentoFrig.value = frigValor.toFixed(2);
+    }
+    if (suprimentoSecos) {
+        suprimentoSecos.value = secosValor.toFixed(2);
+    }
+}
+
+// Ao carregar a página, se já existir CODOM definido, buscar subordinação
+document.addEventListener('DOMContentLoaded', function() {
+    const codomInput = document.getElementById('codom');
+    if (codomInput && codomInput.value) {
+        buscarSubordinacaoPorCodom(codomInput.value);
+    }
+
+    // Inicializar visibilidade dos campos de valor_recuperacao para viaturas e geradores salvos
+    document.querySelectorAll('select[name^="viatura_situacao_"]').forEach(s => {
+        const match = s.name.match(/viatura_situacao_(\d+)/);
+        const idx = match ? match[1] : null;
+        if (idx !== null) handleSituacaoChange(s, idx, 'viatura');
+    });
+    document.querySelectorAll('select[name^="viatura_tipo_"]').forEach(s => {
+        const match = s.name.match(/viatura_tipo_(\d+)/);
+        const idx = match ? match[1] : null;
+        if (idx !== null) handleTipoChange(s, idx);
+    });
+    document.querySelectorAll('select[name^="gerador_situacao_"]').forEach(s => {
+        const match = s.name.match(/gerador_situacao_(\d+)/);
+        const idx = match ? match[1] : null;
+        if (idx !== null) handleSituacaoChange(s, idx, 'gerador');
+    });
+});
+
+// Mostra ou esconde o campo de valor de recuperação quando situação == 'baixada'
+function handleSituacaoChange(select, index, prefix) {
+    try {
+        const group = document.getElementById(`${prefix}_valor_recuperacao_group_${index}`);
+        const input = document.getElementById(`${prefix}_valor_recuperacao_${index}`);
+        if (!group) return;
+        if (select.value === 'baixada') {
+            group.classList.remove('d-none');
+        } else {
+            group.classList.add('d-none');
+            if (input) input.value = '';
+        }
+    } catch (error) {
+        console.error('Erro em handleSituacaoChange:', error);
+    }
+}
+
+// Funções para gerenciamento de OMs
+function filtrarOMsDisponiveis() {
+    const busca = document.getElementById('search_oms').value.toLowerCase();
+    const linhas = document.querySelectorAll('#omsDisponiveisTable tbody tr');
+    let contador = 0;
+    
+    linhas.forEach(linha => {
+        const sigla = linha.cells[1].textContent.toLowerCase();
+        const nome = linha.cells[2].textContent.toLowerCase();
+        const ug = linha.cells[3].textContent.toLowerCase();
+        const codom = linha.cells[4].textContent.toLowerCase();
+        
+        if (sigla.includes(busca) || nome.includes(busca) || ug.includes(busca) || codom.includes(busca)) {
+            linha.style.display = '';
+            contador++;
+        } else {
+            linha.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('omsDisponiveisCount').textContent = contador;
+}
+
+function limparBuscaOMs() {
+    document.getElementById('search_oms').value = '';
+    filtrarOMsDisponiveis();
+}
+
+function toggleSelectAllOMs() {
+    const selectAll = document.getElementById('selectAllOMs').checked;
+    const checkboxes = document.querySelectorAll('.om-checkbox:not([disabled])');
+    
+    checkboxes.forEach(checkbox => {
+        if (!checkbox.disabled) {
+            checkbox.checked = selectAll;
+        }
+    });
+}
+
+function toggleOMSelection(checkbox) {
+    // Marca/desmarca o checkbox principal
+    const checkboxes = document.querySelectorAll('.om-checkbox:not([disabled])');
+    const selecionados = document.querySelectorAll('.om-checkbox:checked:not([disabled])');
+    
+    document.getElementById('selectAllOMs').checked = 
+        selecionados.length === checkboxes.length && checkboxes.length > 0;
+}
+
+function adicionarOMsSelecionadas() {
+    const checkboxes = document.querySelectorAll('.om-checkbox:checked:not([disabled])');
+    
+    checkboxes.forEach(checkbox => {
+        const om = checkbox.dataset.om;
+        
+        // Verificar se já foi adicionada
+        if (!omsSelecionadas.includes(om)) {
+            const linha = checkbox.closest('tr');
+            const sigla = linha.cells[1].textContent;
+            const nome = linha.cells[2].textContent;
+            const ug = linha.cells[3].textContent;
+            const codom = linha.cells[4].textContent;
+            
+            // Adicionar à lista de selecionadas
+            omsSelecionadas.push(om);
+            
+            // Adicionar à tabela de selecionadas
+            adicionarOMSelecionadaTabela(om, sigla, nome, ug, codom);
+            
+            // Desabilitar o checkbox na lista de disponíveis
+            checkbox.disabled = true;
+        }
+    });
+    
+    // Atualizar contadores
+    atualizarContadorOMs();
+    atualizarOMsSelecionadasInput();
+    
+    // Desmarcar "Selecionar todos"
+    document.getElementById('selectAllOMs').checked = false;
+}
+
+function adicionarOMSelecionadaTabela(om, sigla, nome, ug, codom) {
+    const tbody = document.querySelector('#omsSelecionadasTable tbody');
+    const novaLinha = document.createElement('tr');
+    novaLinha.dataset.om = om;
+    
+    novaLinha.innerHTML = `
+        <td>
+            <i class="fas fa-check text-success"></i>
+        </td>
+        <td><strong>${sigla}</strong></td>
+        <td>${nome}</td>
+        <td>${ug}</td>
+        <td>${codom}</td>
+        <td>
+            <button type="button" class="btn-icon btn-sm btn-danger" onclick="removerOM('${om}')">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(novaLinha);
+}
+
+function removerOM(om) {
+    // Remover da lista de selecionadas
+    const index = omsSelecionadas.indexOf(om);
+    if (index !== -1) {
+        omsSelecionadas.splice(index, 1);
+    }
+    
+    // Remover da tabela de selecionadas
+    const linhaSelecionada = document.querySelector(`#omsSelecionadasTable tr[data-om="${om}"]`);
+    if (linhaSelecionada) {
+        linhaSelecionada.remove();
+    }
+    
+    // Reabilitar checkbox na lista de disponíveis
+    const checkbox = document.querySelector(`.om-checkbox[data-om="${om}"]`);
+    if (checkbox) {
+        checkbox.disabled = false;
+        checkbox.checked = false;
+    }
+    
+    // Atualizar contadores
+    atualizarContadorOMs();
+    atualizarOMsSelecionadasInput();
+}
+
+function removerTodasOMs() {
+    if (omsSelecionadas.length === 0) return;
+    
+    if (confirm(`Tem certeza que deseja remover todas as ${omsSelecionadas.length} OMs selecionadas?`)) {
+        // Remover todas as OMs da lista de selecionadas
+        const omsParaRemover = [...omsSelecionadas];
+        omsParaRemover.forEach(om => {
+            removerOM(om);
+        });
+        
+        // Limpar completamente a lista
+        omsSelecionadas = [];
+        document.querySelector('#omsSelecionadasTable tbody').innerHTML = '';
+        
+        // Atualizar contadores
+        atualizarContadorOMs();
+        atualizarOMsSelecionadasInput();
+    }
+}
+
+function atualizarContadorOMs() {
+    // Atualizar contador de disponíveis
+    const checkboxesDisponiveis = document.querySelectorAll('.om-checkbox:not([disabled])');
+    document.getElementById('omsDisponiveisCount').textContent = checkboxesDisponiveis.length;
+    
+    // Atualizar contador de selecionadas
+    document.getElementById('omsSelecionadasCount').textContent = omsSelecionadas.length;
+    
+    // Atualizar botões de navegação se não tiver OMs selecionadas na aba 1
+    if (abaAtual === 0 && omsSelecionadas.length === 0) {
+        // Mostrar alerta visual
+        const nextBtn = document.getElementById('nextTabBtn');
+        nextBtn.disabled = true;
+        nextBtn.title = "Selecione pelo menos uma OM antes de prosseguir";
+    } else if (abaAtual === 0) {
+        const nextBtn = document.getElementById('nextTabBtn');
+        nextBtn.disabled = false;
+        nextBtn.title = "";
+    }
+}
+
+function atualizarOMsSelecionadasInput() {
+    // Atualizar campo hidden com as OMs selecionadas
+    document.getElementById('oms_selecionadas').value = omsSelecionadas.join(',');
+    
+    // Também atualizar o campo original do formulário
+    const campoOriginal = document.getElementById('oms_que_apoia_selected');
+    if (campoOriginal) {
+        campoOriginal.value = omsSelecionadas.join(',');
+    }
+}
+
+// Validação do formulário
+function validarFormulario() {
+    if (omsSelecionadas.length === 0) {
+        alert('Por favor, selecione pelo menos uma OM que apoia.');
+        mudarAba(0); // Voltar para a aba de dados gerais
+        return false;
+    }
+    return true;
+}
+
+// Inicializar quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('cadastroForm');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!validarFormulario()) {
+                event.preventDefault();
+            }
+        });
+    }
+    
+    // Para edição, pré-carregar OMs selecionadas
+    preCarregarOMsSelecionadas();
+
+    // Atualizar estado das abas com base em Dados Gerais
+    const nomeEl = document.getElementById('nome');
+    const subEl = document.getElementById('subordinacao');
+    if (nomeEl) nomeEl.addEventListener('change', atualizarNavegacaoAbas);
+    if (subEl) subEl.addEventListener('change', atualizarNavegacaoAbas);
+
+    // Chamada inicial para aplicar o estado correto
+    try { atualizarNavegacaoAbas(); } catch (e) { /* ignore */ }
+
+    // Inicializar botão de salvar
+    const saveBtn = document.getElementById('saveDraftBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => { submitFormCompleto(); });
+    }
+
+});
+
+// Submete o formulário completo (salva todas as abas)
+function submitFormCompleto() {
+    const form = document.getElementById('cadastroForm');
+    if (!form) return;
+    // Sincronizar contadores com o DOM antes de enviar
+    atualizarContadoresHidden();
+    // Gerar inputs ocultos de pessoal antes do submit programático
+    if (typeof serializePessoalMatrix === 'function') {
+        const ok = serializePessoalMatrix(form);
+        if (!ok) return; // erros já exibidos
+    }
+    // disparar validação já existente no submit
+    form.requestSubmit();
+}
+
+// Atualiza inputs hidden de contadores com base na quantidade real de cards
+function atualizarContadoresHidden() {
+    try {
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        const instalacoes = document.querySelectorAll('.instalacao-card');
+        setVal('instalacoes_count', instalacoes.length);
+
+        const geradores = document.querySelectorAll('.gerador-card');
+        setVal('geradores_count', geradores.length);
+
+        const viaturas = document.querySelectorAll('.viatura-card');
+        setVal('viaturas_count', viaturas.length);
+
+        const pessoal = document.querySelectorAll('.pessoal-card');
+        setVal('pessoal_count', pessoal.length);
+    } catch (err) {
+        console.error('Erro ao atualizar contadores hidden:', err);
+    }
+}
+
+// (removido) saveGeradores: botão não é mais exibido
+
+function coletarEnergiaGeradores() {
+    const energia = {
+        dimensionamento: document.getElementById('dimensionamento_energia')?.value || '',
+        capacidade_total_kva: document.getElementById('capacidade_total_kva')?.value || '',
+        observacoes: document.getElementById('observacoes_energia')?.value || ''
+    };
+
+    const geradores = [];
+    const cards = document.querySelectorAll('.gerador-card');
+    cards.forEach(card => {
+        const getVal = (selector) => {
+            const el = card.querySelector(selector);
+            return el ? el.value : '';
+        };
+        const getChecked = (selector) => {
+            const el = card.querySelector(selector);
+            return el ? el.checked : false;
+        };
+
+        geradores.push({
+            capacidade: getVal('input[name^="gerador_capacidade_"]'),
+            marca: getVal('input[name^="gerador_marca_"]'),
+            ano: getVal('input[name^="gerador_ano_"]'),
+            situacao: getVal('select[name^="gerador_situacao_"]'),
+            valor_recuperacao: getVal('input[name^="gerador_valor_recuperacao_"]'),
+            pode_24h: getChecked('input[name^="gerador_24h_"]'),
+            horas: getVal('input[name^="gerador_horas_"]'),
+            ultima_manutencao: getVal('input[name^="gerador_ultima_manutencao_"]'),
+            proxima_manutencao: getVal('input[name^="gerador_proxima_manutencao_"]'),
+            observacoes: getVal('textarea[name^="gerador_observacoes_"]')
+        });
+    });
+
+    return { energia, geradores };
+}
+
+function markSavedFields(ids) {
+    if (!Array.isArray(ids)) return;
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox' || el.type === 'radio') {
+            el.defaultChecked = el.checked;
+        } else {
+            el.defaultValue = el.value;
+        }
+    });
+}
+
+function preCarregarOMsSelecionadas() {
+    const historicoInline = "{{ orgao.historico if orgao is defined else '' }}";
+    const historico = (window.EDIT_MODE && window.PRELOAD_ORGAO && window.PRELOAD_ORGAO.historico)
+        ? window.PRELOAD_ORGAO.historico
+        : historicoInline;
+
+    const itens = (historico || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+    if (!itens.length) return;
+
+    // Preferir função compartilhada (lida com casos em que OM não está na tabela)
+    if (typeof preencherOMsSelecionadas === 'function') {
+        preencherOMsSelecionadas(itens.join(','));
+        return;
+    }
+
+    itens.forEach(om => {
+        const omTr = document.querySelector(`#omsDisponiveisTable tr[data-om="${escapeSelector(om)}"]`);
+        if (omTr) {
+            const checkbox = omTr.querySelector('.om-checkbox');
+            const sigla = omTr.cells[1].textContent;
+            const nome = omTr.cells[2].textContent;
+            const ug = omTr.cells[3].textContent;
+            const codom = omTr.cells[4].textContent;
+            if (!omsSelecionadas.includes(om)) {
+                omsSelecionadas.push(om);
+                adicionarOMSelecionadaTabela(om, sigla, nome, ug, codom);
+                if (checkbox) {
+                    checkbox.disabled = true;
+                    checkbox.checked = true;
+                }
+            }
+        }
+    });
+
+    atualizarContadorOMs();
+    atualizarOMsSelecionadasInput();
+}
+</script>
+
+<style>
+/* Estilos para o sistema de abas */
+.tabs-container {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.tabs-header {
+    display: flex;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    overflow-x: auto;
+    padding: 0;
+}
+
+.tab-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.tab-btn.active {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border-bottom-color: #3498db;
+}
+
+.tab-content {
+    display: none;
+    padding: 30px;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+.tab-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.tab-indicators {
+    display: flex;
+    gap: 10px;
+}
+
+.tab-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ecf0f1;
+    color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tab-indicator.active {
+    background: #3498db;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Estilos para a seleção de OMs */
+.oms-selection-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+@media (max-width: 992px) {
+    .oms-selection-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.oms-panel {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+}
+
+.oms-panel-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.oms-panel-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.search-box {
+    display: flex;
+    gap: 5px;
+    flex: 1;
+    max-width: 300px;
+}
+
+.oms-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.oms-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.oms-table thead {
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.oms-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.oms-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.oms-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.oms-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.oms-table tbody tr.selected {
+    background-color: #e3f2fd;
+}
+
+.oms-table input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.oms-panel-footer {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.oms-counter, .selected-counter {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.oms-counter span, .selected-counter span {
+    background: #3498db;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    margin-right: 5px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .tabs-header {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        min-width: 100%;
+        text-align: left;
+        padding: 12px 15px;
+    }
+    
+    .tab-navigation {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .oms-panel-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        max-width: 100%;
+        margin-top: 10px;
+    }
+    
+    .oms-table {
+        font-size: 0.85rem;
+    }
+    
+    .oms-table th,
+    .oms-table td {
+        padding: 8px 10px;
+    }
+}
+</style>
+{% if edit_mode and orgao %}
+<script type="application/json" id="preload-orgao-json">{{ orgao | tojson | safe }}</script>
+<script type="application/json" id="preload-data-json">{{ preload_data | tojson | safe }}</script>
+<script>
+// Dados iniciais para modo edição
+window.EDIT_MODE = true;
+try {
+    const orgaoJson = document.getElementById('preload-orgao-json');
+    const dataJson = document.getElementById('preload-data-json');
+    window.PRELOAD_ORGAO = orgaoJson ? JSON.parse(orgaoJson.textContent || '{}') : {};
+    window.PRELOAD_DATA = dataJson ? JSON.parse(dataJson.textContent || '{}') : {};
+} catch (e) {
+    console.error('Erro ao carregar dados de pré-carga', e);
+    window.PRELOAD_ORGAO = {};
+    window.PRELOAD_DATA = {};
+}
+</script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cadastro_completo.js') }}"></script>
+{% endblock %}

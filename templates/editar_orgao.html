@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Órgão Provedor{% endblock %}
+
+{% block content %}
+<div class="header">
+    <img id="cologLogo" src="{{ url_for('static', filename='img/colog.png') }}" alt="COLOG" class="cadastro-logo" onerror="this.style.display='none'">
+    <h1 id="cadastroTitle"><i class="fas fa-edit"></i> Editar Órgão Provedor</h1>
+    <div class="header-right-buttons">
+        <button type="submit" form="editarForm" class="btn btn-primary btn-sm" data-skip-confirm="true"><i class="fas fa-save"></i> Salvar</button>
+        <a href="{{ url_for('visualizar_orgao', id=orgao['id']) }}" class="btn btn-outline" data-skip-confirm="true"><i class="fas fa-arrow-left"></i> Voltar</a>
+    </div>
+</div>
+
+<form id="editarForm" method="POST" action="{{ url_for('editar_orgao', id=orgao['id']) }}" class="card card-body">
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <button type="button" class="tab-btn active" data-tab="dados-gerais">
+                <i class="fas fa-building"></i> Dados Gerais
+            </button>
+            <button type="button" class="tab-btn" data-tab="energia" disabled>
+                <i class="fas fa-bolt"></i> Energia & Geradores
+            </button>
+            <button type="button" class="tab-btn" data-tab="pessoal" disabled>
+                <i class="fas fa-users"></i> Pessoal
+            </button>
+            <button type="button" class="tab-btn" data-tab="viaturas" disabled>
+                <i class="fas fa-truck"></i> Viaturas
+            </button>
+            <button type="button" class="tab-btn" data-tab="instalacoes" disabled>
+                <i class="fas fa-warehouse"></i> Instalações
+            </button>
+        </div>
+
+        <div class="tab-content active" id="dados-gerais">
+            <div class="form-section">
+                <h2><i class="fas fa-building"></i> Dados Gerais</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Órgão Provedor</label>
+                        <input type="text" class="form-control" value="{{ orgao['nome'] }}" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Unidade Gestora</label>
+                        <input type="text" name="unidade_gestora" class="form-control" value="{{ orgao['unidade_gestora'] or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">CODOM</label>
+                        <input type="text" name="codom" class="form-control" value="{{ orgao['codom'] or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">OM Licitação QS</label>
+                        <input type="text" name="om_licitacao_qs" class="form-control" value="{{ orgao['om_licitacao_qs'] or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">OM Licitação QR</label>
+                        <input type="text" name="om_licitacao_qr" class="form-control" value="{{ orgao['om_licitacao_qr'] or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Subordinação</label>
+                        <input type="text" name="subordinacao" class="form-control" value="{{ orgao['subordinacao'] or '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Efetivo de Atendimento</label>
+                        <input type="number" min="0" name="efetivo" class="form-control" value="{{ orgao['efetivo_atendimento'] or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Data de Criação</label>
+                        <input type="date" name="data_criacao" class="form-control" value="{{ orgao['data_criacao'] or '' }}">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">OMs que apoia (separe por vírgula)</label>
+                        <input type="text" name="oms_que_apoia[]" class="form-control" value="{{ orgao['historico'] or '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Missão</label>
+                        <textarea name="missao" class="form-control" rows="2">{{ orgao['missao'] or '' }}</textarea>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Consumo Secos (mensal)</label>
+                        <input type="number" min="0" step="any" name="consumo_secos" class="form-control" value="{{ orgao['consumo_secos_mensal'] or 0 }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Consumo Frigorificados (mensal)</label>
+                        <input type="number" min="0" step="any" name="consumo_frigorificados" class="form-control" value="{{ orgao['consumo_frigorificados_mensal'] or 0 }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Suprimento Secos (mensal)</label>
+                        <input type="number" min="0" step="any" name="suprimento_secos" class="form-control" value="{{ orgao['suprimento_secos_mensal'] or 0 }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Suprimento Frigorificados (mensal)</label>
+                        <input type="number" min="0" step="any" name="suprimento_frigorificados" class="form-control" value="{{ orgao['suprimento_frigorificados_mensal'] or 0 }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Área Edificável Disponível (m²)</label>
+                        <input type="number" min="0" step="any" name="area_edificavel" class="form-control" value="{{ orgao['area_edificavel_disponivel'] or 0 }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Capacidade Total (t)</label>
+                        <input type="number" min="0" step="any" name="capacidade_total_toneladas" class="form-control" value="{{ orgao['capacidade_total_toneladas'] or 0 }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Capacidade Total - Seco (t)</label>
+                        <input type="number" min="0" step="any" name="capacidade_total_toneladas_seco" class="form-control" value="{{ orgao['capacidade_total_toneladas_seco'] or 0 }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="energia">
+            <div class="alert alert-secondary">Edição desta aba será adicionada em breve.</div>
+        </div>
+        <div class="tab-content" id="pessoal">
+            <div class="alert alert-secondary">Edição desta aba será adicionada em breve.</div>
+        </div>
+        <div class="tab-content" id="viaturas">
+            <div class="alert alert-secondary">Edição desta aba será adicionada em breve.</div>
+        </div>
+        <div class="tab-content" id="instalacoes">
+            <div class="alert alert-secondary">Edição desta aba será adicionada em breve.</div>
+        </div>
+    </div>
+</form>
+
+<script>
+// Toggle simple tab visuals for the edit view
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        if (btn.disabled) return;
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+        btn.classList.add('active');
+        var tabId = btn.getAttribute('data-tab');
+        var target = document.getElementById(tabId);
+        if (target) target.classList.add('active');
+    });
+});
+</script>
+{% endblock %}

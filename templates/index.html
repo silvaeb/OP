@@ -1,0 +1,1359 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if not session.username %}
+<script>window.location.href = "{{ url_for('login') }}";</script>
+{% else %}
+<div class="header">
+    <h1><i class="fas fa-warehouse"></i> 
+        {% if nivel_acesso == 'admin' %}
+            Sistema de Gestão de Órgãos Provedores
+        {% elif nivel_acesso == 'cadastrador' %}
+            Meu Painel de Cadastro
+        {% else %}
+            Visualização de Dados
+        {% endif %}
+    </h1>
+    
+    {% if nivel_acesso in ['admin', 'cadastrador'] %}
+    <a href="{{ url_for('cadastro') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Novo Cadastro
+    </a>
+    {% endif %}
+</div>
+
+<!-- Mensagem de boas-vindas -->
+<div class="alert alert-info mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <i class="fas fa-user-circle fa-2x"></i>
+        <div>
+            <h4 class="mb-1">Bem-vindo, {{ session.nome_completo }}!</h4>
+            <p class="mb-0">
+                <strong>Perfil:</strong> 
+                {% if nivel_acesso == 'admin' %}
+                    <span class="badge badge-danger">Administrador</span> - Acesso completo ao sistema
+                {% elif nivel_acesso == 'cadastrador' %}
+                    <span class="badge badge-warning">Cadastrador</span> - Pode cadastrar e gerenciar seus próprios registros
+                {% else %}
+                    <span class="badge badge-info">Visualizador</span> - Somente visualização de dados
+                {% endif %}
+                {% if session.orgao_provedor %}
+                <br><strong>Órgão Provedor:</strong> {{ session.orgao_provedor }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Menu rápido baseado no perfil -->
+<div class="row mb-4">
+    {% if nivel_acesso == 'admin' %}
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card" style="--color1: #e74c3c; --color2: #c0392b;">
+            <i class="fas fa-users dashboard-card-icon"></i>
+            <div class="dashboard-card-value">{{ total_orgaos|default('0') }}</div>
+            <div class="dashboard-card-label">Órgãos Cadastrados</div>
+            <a href="{{ url_for('admin') }}" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-cog"></i> Painel Admin
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card" style="--color1: #3498db; --color2: #2980b9;">
+            <i class="fas fa-chart-pie dashboard-card-icon"></i>
+            <div class="dashboard-card-value">Análise</div>
+            <div class="dashboard-card-label">Dados Gerenciais</div>
+            <button onclick="showAnalise()" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-chart-bar"></i> Ver Análise
+            </button>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card" style="--color1: #2ecc71; --color2: #27ae60;">
+            <i class="fas fa-tools dashboard-card-icon"></i>
+            <div class="dashboard-card-value">Gestão</div>
+            <div class="dashboard-card-label">Configurações</div>
+            <a href="{{ url_for('cadastro') }}" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-plus"></i> Novo Cadastro
+            </a>
+        </div>
+    </div>
+    
+    {% elif nivel_acesso == 'cadastrador' %}
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card" style="--color1: #3498db; --color2: #2980b9;">
+            <i class="fas fa-file-alt dashboard-card-icon"></i>
+            <div class="dashboard-card-value">{{ orgaos|length }}</div>
+            <div class="dashboard-card-label">Meu Cadastro</div>
+            {% if orgaos|length > 0 %}
+            <a href="{{ url_for('visualizar_orgao', id=orgaos[0].id) }}" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-eye"></i> Ver Cadastro
+            </a>
+            {% else %}
+            <a href="{{ url_for('cadastro') }}" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-plus"></i> Criar Cadastro
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card" style="--color1: #2ecc71; --color2: #27ae60;">
+            <i class="fas fa-edit dashboard-card-icon"></i>
+            <div class="dashboard-card-value">Editar</div>
+            <div class="dashboard-card-label">Atualizar Dados</div>
+            {% if orgaos|length > 0 %}
+            <a href="{{ url_for('editar_orgao', id=orgaos[0].id) }}" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-edit"></i> Editar Cadastro
+            </a>
+            {% else %}
+            <button class="btn btn-outline btn-sm mt-2" disabled>
+                <i class="fas fa-edit"></i> Editar Cadastro
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="dashboard-card" style="--color1: #f39c12; --color2: #e67e22;">
+            <i class="fas fa-user-edit dashboard-card-icon"></i>
+            <div class="dashboard-card-value">Perfil</div>
+            <div class="dashboard-card-label">Meus Dados</div>
+            <a href="{{ url_for('perfil') }}" class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-user-cog"></i> Meu Perfil
+            </a>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="col-md-6 mb-3">
+        <div class="dashboard-card" style="--color1: #3498db; --color2: #2980b9;">
+            <i class="fas fa-eye dashboard-card-icon"></i>
+            <div class="dashboard-card-value">Visualização</div>
+            <div class="dashboard-card-label">Acesso Somente Leitura</div>
+            <p class="small mb-0 mt-2">Você pode visualizar os dados cadastrados, mas não pode modificá-los.</p>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="dashboard-card" style="--color1: #9b59b6; --color2: #8e44ad;">
+            <i class="fas fa-info-circle dashboard-card-icon"></i>
+            <div class="dashboard-card-value">Informações</div>
+            <div class="dashboard-card-label">Sobre o Sistema</div>
+            <button onclick="alert('Sistema de Gestão de Órgãos Provedores\n\nVersão: 2.0\nPerfil: Visualizador')" 
+                    class="btn btn-outline btn-sm mt-2">
+                <i class="fas fa-question-circle"></i> Ajuda
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Conteúdo baseado no perfil -->
+{% if nivel_acesso == 'admin' %}
+<!-- ANÁLISE GERENCIAL (APENAS ADMIN) -->
+{% if orgaos %}
+<div class="form-section" id="analiseGerencial">
+    <h2><i class="fas fa-chart-pie"></i> Análise Gerencial - Capacidade vs Consumo</h2>
+    <div class="analise-thumb-grid" role="tablist" aria-label="Selecione a análise">
+        <button type="button" class="analise-thumb active" data-analise-target="analise-capacidade">
+            <div class="thumb-icon"><i class="fas fa-warehouse"></i></div>
+            <div class="thumb-title">Capacidade/Consumo</div>
+            <div class="thumb-desc">Resumo de fatores e cobertura</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-estoque">
+            <div class="thumb-icon"><i class="fas fa-balance-scale"></i></div>
+            <div class="thumb-title">Estoque 3× Consumo</div>
+            <div class="thumb-desc">Saldo frente à regra de 3 meses</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-supcons">
+            <div class="thumb-icon"><i class="fas fa-water"></i></div>
+            <div class="thumb-title">Suprimento × Consumo</div>
+            <div class="thumb-desc">Filtros e comparativos</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-energia">
+            <div class="thumb-icon"><i class="fas fa-bolt"></i></div>
+            <div class="thumb-title">Energia</div>
+            <div class="thumb-desc">Dimensionamento por OP</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-geradores">
+            <div class="thumb-icon"><i class="fas fa-plug"></i></div>
+            <div class="thumb-title">Geradores</div>
+            <div class="thumb-desc">Quantidade, potência e situação</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-seguranca">
+            <div class="thumb-icon"><i class="fas fa-shield-alt"></i></div>
+            <div class="thumb-title">Segurança Depósitos</div>
+            <div class="thumb-desc">Depósitos sem sistema</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-frigo-deficit">
+            <div class="thumb-icon"><i class="fas fa-snowflake"></i></div>
+            <div class="thumb-title">Déficit Frigo &lt; 4×</div>
+            <div class="thumb-desc">Cobertura fria e área disponível</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-verticalizacao">
+            <div class="thumb-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="thumb-title">Verticalização CL</div>
+            <div class="thumb-desc">Depósitos verticalizados vs não</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-pessoal">
+            <div class="thumb-icon"><i class="fas fa-user-friends"></i></div>
+            <div class="thumb-title">Efetivo por Posto</div>
+            <div class="thumb-desc">Barras empilhadas e tabela</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-vte">
+            <div class="thumb-icon"><i class="fas fa-truck-moving"></i></div>
+            <div class="thumb-title">VTE Baú</div>
+            <div class="thumb-desc">Seco vs Frigorificado por situação</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-empilhadeiras">
+            <div class="thumb-icon"><i class="fas fa-dolly"></i></div>
+            <div class="thumb-title">Empilhadeiras × Depósitos</div>
+            <div class="thumb-desc">Situação e cobertura</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-graficos">
+            <div class="thumb-icon"><i class="fas fa-chart-bar"></i></div>
+            <div class="thumb-title">Gráficos Comparativos</div>
+            <div class="thumb-desc">Capacidade, transporte e estoque</div>
+        </button>
+        <button type="button" class="analise-thumb" data-analise-target="analise-dados">
+            <div class="thumb-icon"><i class="fas fa-table"></i></div>
+            <div class="thumb-title">Dados Gerais</div>
+            <div class="thumb-desc">Tabela completa dos OP</div>
+        </button>
+    </div>
+    
+    <div class="analise-bloco" id="analise-capacidade">
+    <div class="stats-grid">
+        <!-- Estatísticas de capacidade e consumo -->
+        {% set total_capacidade_secos = namespace(value=0) %}
+        {% set total_capacidade_frigo = namespace(value=0) %}
+        {% set total_consumo_secos = namespace(value=0) %}
+        {% set total_consumo_frigo = namespace(value=0) %}
+        
+        {% for orgao in orgaos %}
+            {% if orgao['capacidade_total_toneladas'] %}
+                {% set total_capacidade_secos.value = total_capacidade_secos.value + orgao['capacidade_total_toneladas'] %}
+                {% set total_capacidade_frigo.value = total_capacidade_frigo.value + (orgao['capacidade_total_toneladas'] * 0.3) %}
+            {% endif %}
+            {% if orgao['consumo_secos_mensal'] %}
+                {% set total_consumo_secos.value = total_consumo_secos.value + orgao['consumo_secos_mensal'] %}
+            {% endif %}
+            {% if orgao['consumo_frigorificados_mensal'] %}
+                {% set total_consumo_frigo.value = total_consumo_frigo.value + orgao['consumo_frigorificados_mensal'] %}
+            {% endif %}
+        {% endfor %}
+        
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.1f"|format(total_capacidade_secos.value) }}</span>
+            <span class="stat-label">Capacidade Total de Secos (ton)</span>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.1f"|format(total_capacidade_frigo.value) }}</span>
+            <span class="stat-label">Capacidade Total de Frigorificados (ton)*</span>
+            <small class="text-muted">*Estimativa: 30% da capacidade total</small>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.1f"|format(total_consumo_secos.value) }}</span>
+            <span class="stat-label">Consumo Mensal de Secos (ton)</span>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.1f"|format(total_consumo_frigo.value) }}</span>
+            <span class="stat-label">Consumo Mensal de Frigorificados (ton)</span>
+        </div>
+    </div>
+
+    <!-- Cobertura de Atendimento (OMs x Efetivo x Capacidade) -->
+    <div class="table-responsive mt-4">
+        <h3><i class="fas fa-network-wired"></i> Cobertura dos OP</h3>
+        <table class="table table-sm table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Sigla</th>
+                    <th>OMs Atendidas</th>
+                    <th>Efetivo que Apoia (QS)</th>
+                    <th>Capacidade Seco (ton)</th>
+                    <th>Capacidade Frigo (ton)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orgao in orgaos %}
+                {% set oms_qtd = orgao.get('oms_count', 0) %}
+                <tr>
+                    <td><strong>{{ orgao['sigla'] or orgao['nome'] }}</strong></td>
+                    <td>{{ oms_qtd }}</td>
+                    <td>{{ orgao['efetivo_atendimento'] or 0 }}</td>
+                    <td>{{ "%.1f"|format(orgao['capacidade_total_toneladas'] or 0) }}</td>
+                    <td>{{ "%.1f"|format(orgao['capacidade_total_toneladas_seco'] or 0) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+    <!-- Capacidade vs Fator de Consumo (cobertura) -->
+    <div class="table-responsive mt-4 analise-bloco" id="analise-estoque">
+        <h3><i class="fas fa-balance-scale"></i> Capacidade de Estocagem x Fator de Consumo</h3>
+        <p class="text-muted small">Mostra quantos fatores de consumo (meses) a capacidade atual comporta. Meta mínima: 3×.</p>
+        <table class="table table-sm table-striped table-bordered align-middle">
+            <thead>
+                <tr>
+                    <th>Sigla</th>
+                    <th>Cap. Seco (ton)</th>
+                    <th>FC Seco (ton/mês)</th>
+                    <th>Cobertura Seco (× FC)</th>
+                    <th>Cap. Frigo (ton)</th>
+                    <th>FC Frigo (ton/mês)</th>
+                    <th>Cobertura Frigo (× FC)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orgao in orgaos %}
+                {% set cap_seco = orgao['capacidade_total_toneladas'] or 0 %}
+                {% set cap_frigo = orgao['capacidade_total_toneladas_seco'] or 0 %}
+                {% set cons_seco = orgao['consumo_secos_mensal'] or 0 %}
+                {% set cons_frigo = orgao['consumo_frigorificados_mensal'] or 0 %}
+                {% set cobertura_seco = (cap_seco / cons_seco) if cons_seco else 0 %}
+                {% set cobertura_frigo = (cap_frigo / cons_frigo) if cons_frigo else 0 %}
+                {% set atende_seco = cobertura_seco >= 3 %}
+                {% set atende_frigo = cobertura_frigo >= 3 %}
+                {% set ok_count = (1 if atende_seco else 0) + (1 if atende_frigo else 0) %}
+                <tr>
+                    <td><strong>{{ orgao['sigla'] or orgao['nome'] }}</strong></td>
+                    <td>{{ "%.1f"|format(cap_seco) }}</td>
+                    <td class="text-muted">{{ "%.1f"|format(cons_seco) }}</td>
+                    <td class="fw-bold {{ 'text-success' if cobertura_seco >= 3 else 'text-danger' }}">{{ "%.1f"|format(cobertura_seco) }}×</td>
+                    <td>{{ "%.1f"|format(cap_frigo) }}</td>
+                    <td class="text-muted">{{ "%.1f"|format(cons_frigo) }}</td>
+                    <td class="fw-bold {{ 'text-success' if cobertura_frigo >= 3 else 'text-danger' }}">{{ "%.1f"|format(cobertura_frigo) }}×</td>
+                    <td>
+                        {% if ok_count == 2 %}
+                            <span class="badge badge-success">Cobertura ≥ 3× nos dois</span>
+                        {% elif ok_count == 1 %}
+                            <span class="badge badge-warning">Cobertura parcial</span>
+                        {% else %}
+                            <span class="badge badge-danger">Cobertura insuficiente</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Déficit de armazenamento frigorificado (<4 FC) -->
+    <div class="form-section mt-4 analise-bloco" id="analise-frigo-deficit">
+        <h3><i class="fas fa-snowflake"></i> Déficit de Frigorificados (Cobertura &lt; 4× FC)</h3>
+        <p class="text-muted small">Lista os OP com cobertura frigorificada abaixo de 4 fatores de consumo e destaca se há área edificável disponível para expansão.</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>OP</th>
+                        <th>Capacidade Frigo (ton)</th>
+                        <th>Consumo Frigo (ton/mês)</th>
+                        <th>Cobertura (× FC)</th>
+                        <th>Área edificável</th>
+                        <th>Tem área?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set deficit_list = analiticos.get('frigo_deficit', []) if analiticos else [] %}
+                    {% if deficit_list %}
+                        {% for row in deficit_list %}
+                        {% set badge = 'badge-danger' if row.cobertura < 2 else 'badge-warning' %}
+                        {% set area_badge = 'badge-success' if row.tem_area else 'badge-secondary' %}
+                        <tr>
+                            <td><strong>{{ row.sigla }}</strong></td>
+                            <td class="text-center">{{ '%.1f'|format(row.cap_frigo) }}</td>
+                            <td class="text-center text-muted">{{ '%.1f'|format(row.cons_frigo) }}</td>
+                            <td class="text-center"><span class="badge {{ badge }}">{{ '%.1f'|format(row.cobertura) }}×</span></td>
+                            <td class="text-center">{{ '%.1f'|format(row.area_disp) }}</td>
+                            <td class="text-center"><span class="badge {{ area_badge }}">{{ 'Sim' if row.tem_area else 'Não' }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="6" class="text-center text-muted">Nenhum OP com cobertura frigorificada abaixo de 4× FC ou sem consumo informado.</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Fator de Suprimento x Fator de Consumo -->
+    <div class="form-section mt-4 analise-bloco" id="analise-supcons">
+        <h3><i class="fas fa-chart-bar"></i> Fator de Suprimento x Fator de Consumo</h3>
+        <p class="text-muted small">Compare o suprimento (planejado) versus o consumo (demandado) de cada OP e filtre a visualização.</p>
+
+        <div class="row align-items-end g-3 mb-3">
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Selecione os OPs</label>
+                <select id="supConsSelect" class="form-control" multiple size="6">
+                    {% for orgao in orgaos %}
+                    <option value="{{ orgao['id'] }}">{{ orgao['sigla'] or orgao['nome'] }}</option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Use Ctrl/Cmd para múltiplos.</small>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Tipo de gráfico</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline btn-sm" data-chart-type="bar">Barras</button>
+                    <button type="button" class="btn btn-outline btn-sm" data-chart-type="line">Linhas</button>
+                    <button type="button" class="btn btn-outline btn-sm" data-chart-type="radar">Radar</button>
+                </div>
+            </div>
+            <div class="col-md-4 d-flex flex-wrap gap-2">
+                <div>
+                    <button type="button" class="btn btn-outline btn-sm" id="supConsSelectAll">Selecionar todos</button>
+                    <button type="button" class="btn btn-outline btn-sm" id="supConsClear">Limpar</button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary btn-sm" id="supConsUpdate">Atualizar visão</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-7 mb-3">
+                <div class="card h-100 chart-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Comparativo por OP</h5>
+                        <canvas id="supConsChart" height="220"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">Tabela Resumida</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped" id="supConsTable">
+                                <thead>
+                                    <tr>
+                                        <th>OP</th>
+                                        <th>FC Seco</th>
+                                        <th>FS Seco</th>
+                                        <th>FC/FS Seco (%)</th>
+                                        <th>Δ Seco</th>
+                                        <th>FC Frigo</th>
+                                        <th>FS Frigo</th>
+                                        <th>FC/FS Frigo (%)</th>
+                                        <th>Δ Frigo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supConsTbody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted">Δ = Suprimento - Consumo (positivo indica folga).</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dimensionamento de Energia Elétrica -->
+    <div class="form-section mt-4 analise-bloco" id="analise-energia">
+        <h3><i class="fas fa-bolt"></i> Dimensionamento da Energia Elétrica</h3>
+        <p class="text-muted small">Situação do dimensionamento informado para cada OP e capacidade total instalada (kVA).</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>OP</th>
+                        <th>Dimensionamento</th>
+                        <th>Capacidade Total (kVA)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set energia_map = analiticos.get('energia', {}) if analiticos else {} %}
+                    {% for orgao in orgaos %}
+                    {% set energia_info = energia_map.get(orgao['id'], {}) %}
+                    {% set dim = energia_info.get('dimensionamento') or 'não informado' %}
+                    {% set cap_kva = energia_info.get('capacidade_kva') or 0 %}
+                    <tr>
+                        <td>{{ orgao['sigla'] or orgao['nome'] }}</td>
+                        <td>
+                            {% if dim == 'adequado' %}
+                                <span class="badge badge-success text-uppercase">Adequado</span>
+                            {% elif dim == 'insuficiente' %}
+                                <span class="badge badge-warning text-uppercase">Insuficiente</span>
+                            {% elif dim == 'precario' %}
+                                <span class="badge badge-danger text-uppercase">Precário</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Não informado</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ cap_kva|float|round(1) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Geradores: quantidade, potência e situação -->
+    <div class="form-section mt-4 analise-bloco" id="analise-geradores">
+        <h3><i class="fas fa-plug"></i> Geradores por OP</h3>
+        <p class="text-muted small">Quantidade de geradores, capacidade instalada (kVA) e situação declarada.</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>OP</th>
+                        <th>Total</th>
+                        <th>Capacidade (kVA)</th>
+                        <th>Operacional</th>
+                        <th>Em Manutenção</th>
+                        <th>Baixada</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set ger_map = analiticos.get('geradores_resumo', {}) if analiticos else {} %}
+                    {% for orgao in orgaos %}
+                    {% set g = ger_map.get(orgao['id'], {}) %}
+                    <tr>
+                        <td>{{ orgao['sigla'] or orgao['nome'] }}</td>
+                        <td class="text-center fw-bold">{{ g.get('total', 0) }}</td>
+                        <td class="text-end">{{ g.get('cap_kva', 0)|float|round(1) }}</td>
+                        <td class="text-center text-success">{{ g.get('operacional', 0) }}</td>
+                        <td class="text-center text-warning">{{ g.get('manutencao', 0) }}</td>
+                        <td class="text-center text-muted">{{ g.get('baixada', 0) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sistemas de segurança em depósitos -->
+    <div class="form-section mt-4 analise-bloco" id="analise-seguranca">
+        <h3><i class="fas fa-shield-alt"></i> Sistemas de Segurança em Depósitos</h3>
+        <p class="text-muted small">Depósitos que possuem sistema de segurança e destaque para os que ainda não possuem.</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>OP</th>
+                        <th>Depósitos</th>
+                        <th>Com Sistema</th>
+                        <th>Sem Sistema</th>
+                        <th>Sistemas (total)</th>
+                        <th>Operacional</th>
+                        <th>Em Manutenção</th>
+                        <th>Inoperante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set sis_map = analiticos.get('sistemas_depositos', {}) if analiticos else {} %}
+                    {% for orgao in orgaos %}
+                    {% set s = sis_map.get(orgao['id'], {}) %}
+                    {% set sem = s.get('depositos_sem_sistema', 0) %}
+                    <tr class="{{ 'table-danger' if sem > 0 else '' }}">
+                        <td>{{ orgao['sigla'] or orgao['nome'] }}</td>
+                        <td class="text-center">{{ s.get('depositos_total', 0) }}</td>
+                        <td class="text-center text-success">{{ s.get('depositos_com_sistema', 0) }}</td>
+                        <td class="text-center fw-bold {{ 'text-danger' if sem > 0 else 'text-success' }}">{{ sem }}</td>
+                        <td class="text-center text-muted">{{ s.get('sistemas_total', 0) }}</td>
+                        <td class="text-center text-success">{{ s.get('operacional', 0) }}</td>
+                        <td class="text-center text-warning">{{ s.get('manutencao', 0) }}</td>
+                        <td class="text-center text-muted">{{ s.get('inoperante', 0) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+        <!-- Comparativo de Efetivo por Posto/Graduação -->
+        <div class="form-section mt-4 analise-bloco" id="analise-pessoal">
+            <h3><i class="fas fa-user-friends"></i> Efetivo por Posto/Graduação</h3>
+            <p class="text-muted small">Comparativo entre os OP utilizando barras empilhadas por posto/graduação.</p>
+            <div class="row">
+                <div class="col-lg-8 mb-3">
+                    <div class="card h-100 chart-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Distribuição de efetivo por OP</h5>
+                            <canvas id="pessoalPostoChart" height="230"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Tabela resumida</h5>
+                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                <table class="table table-sm table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>OP</th>
+                                            <th>Cor</th>
+                                            <th>T Cel</th>
+                                            <th>Maj</th>
+                                            <th>Cap</th>
+                                            <th>1º Ten</th>
+                                            <th>2º Ten</th>
+                                            <th>Sub Ten</th>
+                                            <th>1º Sgt</th>
+                                            <th>2º Sgt</th>
+                                            <th>3º Sgt</th>
+                                            <th>Cabo</th>
+                                            <th>Sold</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pessoalPostoTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VTE Baú seco vs frigorificado -->
+        <div class="form-section mt-4 analise-bloco" id="analise-vte">
+            <h3><i class="fas fa-truck-moving"></i> VTE Baú (Seco x Frigorificado)</h3>
+            <p class="text-muted small">Quantitativos totais e por situação para cada OP (apenas viaturas VTE com especialização de baú).</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">OP</th>
+                            <th colspan="4" class="text-center">Baú Seco</th>
+                            <th colspan="4" class="text-center">Baú Frigorificado</th>
+                        </tr>
+                        <tr>
+                            <th>Total</th>
+                            <th>Operacional</th>
+                            <th>Em Manutenção</th>
+                            <th>Inoper./Baix.</th>
+                            <th>Total</th>
+                            <th>Operacional</th>
+                            <th>Em Manutenção</th>
+                            <th>Inoper./Baix.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set bau_map = analiticos.get('viaturas_bau', {}) if analiticos else {} %}
+                        {% for orgao in orgaos %}
+                        {% set stats = bau_map.get(orgao['id'], {}) %}
+                        {% set seco = stats.get('bau_seco', {}) %}
+                        {% set frigo = stats.get('bau_frigo', {}) %}
+                        <tr>
+                            <td>{{ orgao['sigla'] or orgao['nome'] }}</td>
+                            <td class="text-center">{{ seco.get('total', 0) }}</td>
+                            <td class="text-center">{{ seco.get('operacional', 0) }}</td>
+                            <td class="text-center">{{ seco.get('manutencao', 0) }}</td>
+                            <td class="text-center">{{ seco.get('inoperante', 0) }}</td>
+                            <td class="text-center">{{ frigo.get('total', 0) }}</td>
+                            <td class="text-center">{{ frigo.get('operacional', 0) }}</td>
+                            <td class="text-center">{{ frigo.get('manutencao', 0) }}</td>
+                            <td class="text-center">{{ frigo.get('inoperante', 0) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Verticalização de depósitos por CL -->
+        <div class="form-section mt-4 analise-bloco" id="analise-verticalizacao">
+            <h3><i class="fas fa-layer-group"></i> Verticalização de Depósitos por CL</h3>
+            <p class="text-muted small">Quantidade de depósitos por Classe (CL) que estão verticalizados ou não verticalizados. Verticalização vazia é tratada como não verticalizado. Tabela ordenada pelos menores percentuais (mais críticos primeiro).</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th>OP</th>
+                            <th>CL</th>
+                            <th>Depósitos CL</th>
+                            <th>Verticalizados</th>
+                            <th>Não verticalizados</th>
+                            <th>% Verticalizado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set vert_list = analiticos.get('verticalizacao_lista', []) if analiticos else [] %}
+                        {% set ops_by_id = orgaos|map(attribute='id')|list %}
+                        {% set op_names = orgaos|map(attribute='sigla')|list %}
+                        {% set rows_sorted = vert_list|sort(attribute='perc') %}
+                        {% if rows_sorted %}
+                            {% for row in rows_sorted %}
+                            {% set idx = ops_by_id.index(row.op_id) if row.op_id in ops_by_id else None %}
+                            {% set op_sigla = orgaos[idx]['sigla'] if idx is not none else '' %}
+                            {% set op_nome = orgaos[idx]['nome'] if idx is not none else '' %}
+                            {% set badge = 'badge-success' if row.verticalizado >= row.nao_verticalizado and row.total else 'badge-danger' if row.total else 'badge-secondary' %}
+                            <tr>
+                                <td>{{ op_sigla or op_nome }}</td>
+                                <td class="text-center">{{ row.cl }}</td>
+                                <td class="text-center fw-bold">{{ row.total }}</td>
+                                <td class="text-center text-success">{{ row.verticalizado }}</td>
+                                <td class="text-center text-warning">{{ row.nao_verticalizado }}</td>
+                                <td class="text-center"><span class="badge {{ badge }}">{{ row.total and ('%.0f%%'|format(row.perc)) or 'N/A' }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="6" class="text-center text-muted">Nenhum depósito do tipo CL cadastrado.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empilhadeiras por situação e cobertura de depósitos -->
+        <div class="form-section mt-4 analise-bloco" id="analise-empilhadeiras">
+            <h3><i class="fas fa-dolly"></i> Empilhadeiras × Depósitos</h3>
+            <p class="text-muted small">Total de empilhadeiras por situação e relação com a quantidade de depósitos atendidos. Meta: pelo menos 2 empilhadeiras <strong>disponíveis</strong> por depósito (2 = suficiente, &gt;2 = excessivo, &lt;2 = deficiente).</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th>OP</th>
+                            <th>Depósitos</th>
+                            <th>Empilhadeiras (total)</th>
+                            <th>Disponíveis</th>
+                            <th>Indisp. Recuperável</th>
+                            <th>Indisponíveis</th>
+                            <th>Disp/Dep</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set emp_map = analiticos.get('empilhadeiras_situacao', {}) if analiticos else {} %}
+                        {% set emp_totais = analiticos.get('empilhadeiras', {}) if analiticos else {} %}
+                        {% for orgao in orgaos %}
+                        {% set emp_sit = emp_map.get(orgao['id'], {}) %}
+                        {% set situacoes = emp_sit.get('situacoes', {}) %}
+                        {% set dep_qtd = emp_sit.get('depositos', 0) %}
+                        {% set total_emp = emp_totais.get(orgao['id'], {}).get('total', 0) or situacoes.values()|sum %}
+                        {% set disp = situacoes.get('disponivel', 0) %}
+                        {% set rec = situacoes.get('indisponivel_recuperavel', 0) %}
+                        {% set indisp = situacoes.get('indisponivel', 0) %}
+                        {% set ratio_disp = (disp / dep_qtd) if dep_qtd else 0 %}
+                        {% if dep_qtd == 0 %}
+                            {% set status_label = 'N/A' %}
+                            {% set status_class = 'badge-secondary' %}
+                        {% elif ratio_disp > 2 %}
+                            {% set status_label = 'Excessivo' %}
+                            {% set status_class = 'badge-info' %}
+                        {% elif ratio_disp == 2 %}
+                            {% set status_label = 'Suficiente' %}
+                            {% set status_class = 'badge-success' %}
+                        {% else %}
+                            {% set status_label = 'Deficiente' %}
+                            {% set status_class = 'badge-danger' %}
+                        {% endif %}
+                        <tr>
+                            <td>{{ orgao['sigla'] or orgao['nome'] }}</td>
+                            <td class="text-center">{{ dep_qtd }}</td>
+                            <td class="text-center fw-bold">{{ total_emp }}</td>
+                            <td class="text-center text-success">{{ disp }}</td>
+                            <td class="text-center text-warning">{{ rec }}</td>
+                            <td class="text-center text-danger">{{ indisp }}</td>
+                            <td class="text-center {{ 'text-danger' if dep_qtd == 0 else 'text-success' if ratio_disp >= 2 else 'text-warning' }}">
+                                {% if dep_qtd == 0 %}-{% else %}{{ '%.1f'|format(ratio_disp) }}{% endif %}
+                            </td>
+                            <td class="text-center"><span class="badge {{ status_class }}">{{ status_label }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    <!-- Gráficos comparativos -->
+    <div class="row mt-4 analise-bloco" id="analise-graficos">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card h-100 chart-card">
+                <div class="card-body">
+                    <h5 class="card-title">Capacidade vs Efetivo</h5>
+                    <p class="card-text text-muted small mb-2">Capacidade total (ton) comparada ao efetivo.</p>
+                    <canvas id="capEfetivoChart" height="160"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card h-100 chart-card">
+                <div class="card-body">
+                    <h5 class="card-title">Transporte Seco/Frigo</h5>
+                    <p class="card-text text-muted small mb-2">Capacidade de carga (ton) e fatores de consumo.</p>
+                    <canvas id="transporteChart" height="160"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card h-100 chart-card">
+                <div class="card-body">
+                    <h5 class="card-title">Empilhadeiras vs Estoque</h5>
+                    <p class="card-text text-muted small mb-2">Empilhadeiras vinculadas e capacidade de estoque das instalações.</p>
+                    <canvas id="empPessoalChart" height="160"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Dados Gerais dos Órgãos Provedores -->
+    <div class="table-responsive mt-4 analise-bloco" id="analise-dados">
+        <h3><i class="fas fa-table"></i> Dados Gerais dos Órgãos Provedores</h3>
+        <table class="table table-sm table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Sigla</th>
+                    <th>RM/Subordinação</th>
+                    <th>UG</th>
+                    <th>CODOM</th>
+                    <th>Efetivo QS</th>
+                    <th>Capacidade Seco (ton)</th>
+                    <th>Capacidade Frigo (ton)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for orgao in orgaos %}
+                <tr>
+                    <td>{{ orgao['nome'] }}</td>
+                    <td>{{ orgao['sigla'] }}</td>
+                    <td>{{ orgao['subordinacao'] }}</td>
+                    <td>{{ orgao['unidade_gestora'] or '' }}</td>
+                    <td>{{ orgao['codom'] or '' }}</td>
+                    <td>{{ orgao['efetivo_atendimento'] or 0 }}</td>
+                    <td>{{ "%.2f"|format(orgao['capacidade_total_toneladas'] or 0) }}</td>
+                    <td>{{ "%.2f"|format(orgao['capacidade_total_toneladas_seco'] or 0) }}</td>
+                    <td>
+                        <a href="{{ url_for('visualizar_orgao', id=orgao['id']) }}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('editar_orgao', id=orgao['id']) }}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- TODOS OS CADASTROS (APENAS ADMIN) -->
+<div class="form-section mt-4">
+    <h2><i class="fas fa-list"></i> Todos os Órgãos Provedores Cadastrados ({{ orgaos|length }})</h2>
+    
+    {% if orgaos %}
+    <div class="orgaos-grid">
+        {% for orgao in orgaos %}
+        <div class="orgao-card">
+            <div class="orgao-header">
+                <h3>{{ orgao['nome'] }}</h3>
+                <span class="badge badge-info">{{ orgao['subordinacao'] }}</span>
+            </div>
+            <div class="orgao-body">
+                <p><i class="fas fa-user-tie"></i> {{ orgao['efetivo_atendimento'] }} pessoas</p>
+                <p><i class="fas fa-weight-hanging"></i> 
+                    <strong>Capacidade:</strong> {{ "%.1f"|format(orgao['capacidade_total_toneladas'] or 0) }} ton
+                </p>
+                <p><i class="fas fa-user"></i> 
+                    <strong>Cadastrado por:</strong> {{ orgao['criado_por_nome'] if orgao['criado_por_nome'] else 'Sistema' }}
+                </p>
+                <p><i class="fas fa-calendar"></i> 
+                    <strong>Data:</strong> {{ orgao['data_cadastro'].split()[0] if orgao['data_cadastro'] and ' ' in orgao['data_cadastro'] else orgao['data_cadastro'] }}
+                </p>
+            </div>
+            <div class="orgao-footer">
+                <a href="{{ url_for('visualizar_orgao', id=orgao['id']) }}" class="btn btn-outline">
+                    <i class="fas fa-eye"></i> Ver
+                </a>
+                <a href="{{ url_for('editar_orgao', id=orgao['id']) }}" class="btn btn-outline">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <form action="{{ url_for('excluir_orgao', id=orgao['id']) }}" method="POST" style="display:inline;" onsubmit="return confirm('Confirma a exclusão do cadastro {{ orgao['sigla'] or orgao['nome'] }}? Esta ação é definitiva.');">
+                    <button type="submit" class="btn btn-outline btn-danger">
+                        <i class="fas fa-trash"></i> Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-warehouse fa-3x"></i>
+        <h3>Nenhum órgão cadastrado</h3>
+        <p>Comece cadastrando o primeiro órgão provedor.</p>
+        <a href="{{ url_for('cadastro') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Cadastrar Agora
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% elif nivel_acesso == 'cadastrador' %}
+<!-- MEU CADASTRO (PERFIL CADASTRADOR) -->
+<div class="form-section">
+    <h2><i class="fas fa-file-contract"></i> Meu Cadastro</h2>
+    
+    {% if orgaos %}
+    <p class="mb-3">Você tem <strong>1</strong> cadastro vinculado ao órgão: <strong>{{ orgaos[0].nome }}</strong></p>
+    
+    <div class="orgaos-grid">
+        <div class="orgao-card">
+            <div class="orgao-header">
+                <h3>{{ orgaos[0]['nome'] }}</h3>
+                <span class="badge badge-info">{{ orgaos[0]['subordinacao'] }}</span>
+            </div>
+            <div class="orgao-body">
+                <p><i class="fas fa-user-tie"></i> {{ orgaos[0]['efetivo_atendimento'] }} pessoas</p>
+                <p><i class="fas fa-weight-hanging"></i> 
+                    <strong>Capacidade:</strong> {{ "%.1f"|format(orgaos[0]['capacidade_total_toneladas'] or 0) }} ton
+                </p>
+                <p><i class="fas fa-calendar"></i> 
+                    <strong>Cadastrado em:</strong> {{ orgaos[0]['data_cadastro'].split()[0] if orgaos[0]['data_cadastro'] and ' ' in orgaos[0]['data_cadastro'] else orgaos[0]['data_cadastro'] }}
+                </p>
+                <p><i class="fas fa-building"></i> 
+                    <strong>Unidade Gestora:</strong> {{ orgaos[0]['unidade_gestora'] or 'Não informado' }}
+                </p>
+            </div>
+            <div class="orgao-footer">
+                <a href="{{ url_for('visualizar_orgao', id=orgaos[0]['id']) }}" class="btn btn-outline">
+                    <i class="fas fa-eye"></i> Ver Detalhes
+                </a>
+                <a href="{{ url_for('editar_orgao', id=orgaos[0]['id']) }}" class="btn btn-outline">
+                    <i class="fas fa-edit"></i> Editar Cadastro
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-file-alt fa-3x"></i>
+        <h3>Você ainda não tem cadastro</h3>
+        <p>Você está vinculado ao órgão: <strong>{{ session.orgao_provedor }}</strong></p>
+        <p>Crie o cadastro para o seu órgão provedor.</p>
+        <a href="{{ url_for('cadastro') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Criar Cadastro
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- INSTRUÇÕES PARA CADASTRADOR -->
+<div class="form-section mt-4">
+    <h2><i class="fas fa-graduation-cap"></i> Instruções para Cadastrador</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="info-item">
+                <h4><i class="fas fa-check-circle text-success"></i> O que você pode fazer:</h4>
+                <ul>
+                    <li><strong>Criar cadastro</strong> para o seu órgão provedor</li>
+                    <li><strong>Editar o cadastro</strong> do seu órgão a qualquer momento</li>
+                    <li><strong>Visualizar detalhes</strong> do seu cadastro</li>
+                    <li><strong>Adicionar fotos</strong> das instalações e equipamentos</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-item">
+                <h4><i class="fas fa-times-circle text-danger"></i> Limitações do seu perfil:</h4>
+                <ul>
+                    <li><strong>Só pode ter 1 cadastro</strong> (do seu próprio órgão)</li>
+                    <li><strong>Não pode ver</strong> cadastros de outros órgãos</li>
+                    <li><strong>Não pode modificar</strong> configurações do sistema</li>
+                    <li><strong>Não pode criar</strong> novos usuários</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- VISUALIZADOR: SOMENTE LISTAGEM DO PRÓPRIO ÓRGÃO -->
+<div class="form-section">
+    <h2><i class="fas fa-eye"></i> Órgão Provedor para Visualização</h2>
+    
+    {% if orgaos %}
+    <div class="alert alert-info mb-3">
+        <i class="fas fa-info-circle"></i>
+        <strong>Perfil de Visualizador:</strong> Você pode visualizar os dados do seu órgão, mas não pode modificá-los.
+    </div>
+    
+    <div class="orgaos-grid">
+        <div class="orgao-card">
+            <div class="orgao-header">
+                <h3>{{ orgaos[0]['nome'] }}</h3>
+                <span class="badge badge-info">{{ orgaos[0]['subordinacao'] }}</span>
+            </div>
+            <div class="orgao-body">
+                <p><i class="fas fa-user-tie"></i> {{ orgaos[0]['efetivo_atendimento'] }} pessoas</p>
+                <p><i class="fas fa-weight-hanging"></i> 
+                    <strong>Capacidade:</strong> {{ "%.1f"|format(orgaos[0]['capacidade_total_toneladas'] or 0) }} ton
+                </p>
+                {% if orgaos[0]['unidade_gestora'] %}
+                <p><i class="fas fa-users-cog"></i> {{ orgaos[0]['unidade_gestora'] }}</p>
+                {% endif %}
+                <p><i class="fas fa-calendar"></i> 
+                    <strong>Cadastrado em:</strong> {{ orgaos[0]['data_cadastro'].split()[0] if orgaos[0]['data_cadastro'] and ' ' in orgaos[0]['data_cadastro'] else orgaos[0]['data_cadastro'] }}
+                </p>
+            </div>
+            <div class="orgao-footer">
+                <a href="{{ url_for('visualizar_orgao', id=orgaos[0]['id']) }}" class="btn btn-outline">
+                    <i class="fas fa-eye"></i> Ver Detalhes
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-warehouse fa-3x"></i>
+        <h3>Órgão ainda não cadastrado</h3>
+        <p>O órgão <strong>{{ session.orgao_provedor }}</strong> ainda não possui cadastro no sistema.</p>
+        <p>Aguarde até que um cadastrador realize o cadastro.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAnalise() {
+    const analiseSection = document.getElementById('analiseGerencial');
+    if (analiseSection) {
+        analiseSection.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const thumbs = Array.from(document.querySelectorAll('.analise-thumb'));
+    const blocks = Array.from(document.querySelectorAll('.analise-bloco'));
+
+    function activate(targetId) {
+        thumbs.forEach(btn => {
+            const isActive = btn.getAttribute('data-analise-target') === targetId;
+            btn.classList.toggle('active', isActive);
+        });
+        blocks.forEach(block => {
+            const isMatch = (block.id || block.getAttribute('data-analise-id')) === targetId;
+            block.style.display = isMatch ? '' : 'none';
+        });
+    }
+
+    thumbs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-analise-target');
+            activate(target);
+        });
+    });
+
+    if (thumbs.length) {
+        const firstTarget = thumbs.find(t => t.classList.contains('active'))?.getAttribute('data-analise-target')
+            || thumbs[0].getAttribute('data-analise-target');
+        activate(firstTarget);
+    }
+});
+</script>
+<style>
+.chart-card .card-body { padding: 14px; }
+.chart-card canvas { max-height: 180px; }
+.analise-thumb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.analise-thumb { border: 1px solid #e4e4e4; border-radius: 10px; padding: 12px; background: #fff; box-shadow: 0 6px 12px rgba(0,0,0,0.04); text-align: left; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; display: flex; flex-direction: column; gap: 6px; }
+.analise-thumb:hover { transform: translateY(-2px); box-shadow: 0 10px 18px rgba(0,0,0,0.06); }
+.analise-thumb.active { border-color: #1abc9c; box-shadow: 0 12px 20px rgba(26,188,156,0.18); background: #f6fffc; }
+.analise-thumb .thumb-icon { width: 36px; height: 36px; border-radius: 10px; background: #eef7ff; display: grid; place-items: center; color: #1f7aec; font-size: 16px; }
+.analise-thumb.active .thumb-icon { background: #e7f9f3; color: #128365; }
+.analise-thumb .thumb-title { font-weight: 600; font-size: 14px; color: #1f2d3d; }
+.analise-thumb .thumb-desc { font-size: 12px; color: #6b7785; line-height: 1.3; }
+.analise-bloco {
+    margin-top: 16px;
+    margin-bottom: 48px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #ebedf0;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+    clear: both;
+    position: relative;
+    overflow: hidden;
+}
+</style>
+{% if nivel_acesso == 'admin' and orgaos %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orgaosData = {{ orgaos|tojson }};
+    const analiticos = {{ analiticos|tojson }};
+    const hasChart = typeof Chart !== 'undefined';
+    if (!Array.isArray(orgaosData) || !hasChart) {
+        return;
+    }
+
+    const capEfetivoEl = document.getElementById('capEfetivoChart');
+
+    const labels = orgaosData.map(o => o.sigla || o.nome || 'OP');
+    const capData = orgaosData.map(o => Number(o.capacidade_total_toneladas || 0));
+    const efetivoData = orgaosData.map(o => Number(o.efetivo_atendimento || 0));
+
+    const viaturasInfo = analiticos.viaturas || {};
+    const viaturasQtd = orgaosData.map(o => Number((viaturasInfo[o.id] && viaturasInfo[o.id].total) || 0));
+    const viaturasCapSecoTon = orgaosData.map(o => {
+        const info = viaturasInfo[o.id];
+        return info ? Number((info.cap_seco || 0) / 1000) : 0;
+    });
+    const viaturasCapFrigoTon = orgaosData.map(o => {
+        const info = viaturasInfo[o.id];
+        return info ? Number((info.cap_frigo || 0) / 1000) : 0;
+    });
+    const fcSecos = orgaosData.map(o => Number(o.consumo_secos_mensal || 0));
+    const fcFrigo = orgaosData.map(o => Number(o.consumo_frigorificados_mensal || 0));
+
+    const empilhadeirasMap = analiticos.empilhadeiras || {};
+    const pessoalMap = analiticos.pessoal || {};
+    const empilhadeirasData = orgaosData.map(o => Number((empilhadeirasMap[o.id] && empilhadeirasMap[o.id].total) || 0));
+    const capEstoqueData = orgaosData.map(o => Number((empilhadeirasMap[o.id] && empilhadeirasMap[o.id].cap_estoque) || 0));
+    const pessoalPorPosto = analiticos.pessoal_por_posto || {};
+    const postoKeys = {{ POSTO_KEYS|tojson }};
+    const postoDisplayMap = {{ POSTO_MAP|tojson }};
+    const postoTableKeys = ['coronel','tenente_coronel','major','capitao','primeiro_tenente','segundo_tenente','subtenente','primeiro_sargento','segundo_sargento','terceiro_sargento','cabo','soldado'];
+
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true } }
+    };
+
+    if (capEfetivoEl) {
+        new Chart(capEfetivoEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Capacidade (ton)', data: capData, backgroundColor: 'rgba(52, 152, 219, 0.6)' },
+                    { label: 'Efetivo (pessoas)', data: efetivoData, backgroundColor: 'rgba(231, 76, 60, 0.6)' }
+                ]
+            },
+            options: baseOptions
+        });
+    }
+
+    const transporteEl = document.getElementById('transporteChart');
+    if (transporteEl) {
+        new Chart(transporteEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Capacidade Seco (ton)', data: viaturasCapSecoTon, backgroundColor: 'rgba(46, 204, 113, 0.65)' },
+                    { label: 'FC Secos (ton/mês)', data: fcSecos, backgroundColor: 'rgba(52, 152, 219, 0.65)' },
+                    { label: 'Capacidade Frigo (ton)', data: viaturasCapFrigoTon, backgroundColor: 'rgba(241, 196, 15, 0.65)' },
+                    { label: 'FC Frigo (ton/mês)', data: fcFrigo, backgroundColor: 'rgba(231, 76, 60, 0.65)' }
+                ]
+            },
+            options: baseOptions
+        });
+    }
+
+    const empPessoalEl = document.getElementById('empPessoalChart');
+    if (empPessoalEl) {
+        new Chart(empPessoalEl.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Empilhadeiras (qtd)', data: empilhadeirasData, backgroundColor: 'rgba(155, 89, 182, 0.65)' },
+                    { label: 'Capacidade de Estoque (ton)', data: capEstoqueData, backgroundColor: 'rgba(52, 73, 94, 0.65)' }
+                ]
+            },
+            options: baseOptions
+        });
+    }
+
+    // Efetivo por posto/graduação (barras empilhadas)
+    const pessoalPostoEl = document.getElementById('pessoalPostoChart');
+    const pessoalPostoTable = document.getElementById('pessoalPostoTableBody');
+
+    function buildPessoalDatasets() {
+        const palette = [
+            '#1abc9c', '#3498db', '#9b59b6', '#f1c40f', '#e67e22', '#e74c3c', '#2ecc71', '#16a085', '#2980b9', '#8e44ad', '#d35400', '#c0392b', '#7f8c8d'
+        ];
+        let idx = 0;
+        return postoKeys.map(key => {
+            const series = orgaosData.map(o => Number((pessoalPorPosto[o.id] && pessoalPorPosto[o.id][key]) || 0));
+            const hasData = series.some(v => v > 0);
+            if (!hasData) return null;
+            const color = palette[idx % palette.length];
+            idx += 1;
+            return {
+                label: postoDisplayMap[key] || key,
+                data: series,
+                backgroundColor: color,
+                stack: 'posto'
+            };
+        }).filter(Boolean);
+    }
+
+    function renderPessoalChart() {
+        if (!pessoalPostoEl) return;
+        const datasets = buildPessoalDatasets();
+        if (!datasets.length) return;
+        new Chart(pessoalPostoEl.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+            }
+        });
+    }
+
+    function renderPessoalTable() {
+        if (!pessoalPostoTable) return;
+        pessoalPostoTable.innerHTML = orgaosData.map(o => {
+            const mapa = pessoalPorPosto[o.id] || {};
+            const total = Object.values(mapa).reduce((acc, val) => acc + Number(val || 0), 0);
+            const cells = postoTableKeys.map(k => `<td>${Number(mapa[k] || 0)}</td>`).join('');
+            return `<tr>
+                <td><strong>${o.sigla || o.nome || 'OP'}</strong></td>
+                ${cells}
+                <td class="fw-bold">${total}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    renderPessoalChart();
+    renderPessoalTable();
+
+    // Suprimento x Consumo com filtros e tipos de gráfico
+    const supConsEl = document.getElementById('supConsChart');
+    const supConsSelect = document.getElementById('supConsSelect');
+    const supConsTbody = document.getElementById('supConsTbody');
+    const supConsUpdateBtn = document.getElementById('supConsUpdate');
+    const supConsSelectAllBtn = document.getElementById('supConsSelectAll');
+    const supConsClearBtn = document.getElementById('supConsClear');
+    const chartTypeButtons = document.querySelectorAll('[data-chart-type]');
+    let supConsChart = null;
+    let currentType = 'bar';
+
+    function formatTon(v) {
+        return Number(v || 0).toFixed(2);
+    }
+
+    function getSelectedIds() {
+        const opts = Array.from(supConsSelect?.selectedOptions || []);
+        return opts.map(o => Number(o.value));
+    }
+
+    function ensureSelection() {
+        if (!supConsSelect) return;
+        if (supConsSelect.selectedOptions.length === 0) {
+            Array.from(supConsSelect.options).forEach(o => { o.selected = true; });
+        }
+    }
+
+    function buildFilteredData() {
+        const ids = getSelectedIds();
+        const filtered = ids.length ? orgaosData.filter(o => ids.includes(o.id)) : orgaosData;
+        return filtered.map(o => ({
+            id: o.id,
+            label: o.sigla || o.nome || 'OP',
+            fcSeco: Number(o.consumo_secos_mensal || 0),
+            fsSeco: Number(o.suprimento_secos_mensal || 0),
+            fcFrigo: Number(o.consumo_frigorificados_mensal || 0),
+            fsFrigo: Number(o.suprimento_frigorificados_mensal || 0)
+        }));
+    }
+
+    function renderSupConsChart() {
+        if (!supConsEl) return;
+        const data = buildFilteredData();
+        const labelsLocal = data.map(d => d.label);
+        const ds = {
+            labels: labelsLocal,
+            datasets: [
+                { label: 'FS Seco (ton/mês)', data: data.map(d => d.fsSeco), backgroundColor: 'rgba(46, 204, 113, 0.65)', borderColor: 'rgba(46, 204, 113, 0.9)', fill: currentType !== 'bar' },
+                { label: 'FC Seco (ton/mês)', data: data.map(d => d.fcSeco), backgroundColor: 'rgba(52, 152, 219, 0.65)', borderColor: 'rgba(52, 152, 219, 0.9)', fill: currentType !== 'bar' },
+                { label: 'FS Frigo (ton/mês)', data: data.map(d => d.fsFrigo), backgroundColor: 'rgba(243, 156, 18, 0.65)', borderColor: 'rgba(243, 156, 18, 0.9)', fill: currentType !== 'bar' },
+                { label: 'FC Frigo (ton/mês)', data: data.map(d => d.fcFrigo), backgroundColor: 'rgba(231, 76, 60, 0.65)', borderColor: 'rgba(231, 76, 60, 0.9)', fill: currentType !== 'bar' }
+            ]
+        };
+
+        if (supConsChart) {
+            supConsChart.destroy();
+        }
+
+        supConsChart = new Chart(supConsEl.getContext('2d'), {
+            type: currentType,
+            data: ds,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: currentType === 'radar' ? {} : { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    function renderSupConsTable() {
+        if (!supConsTbody) return;
+        const data = buildFilteredData();
+        supConsTbody.innerHTML = data.map(d => {
+            const deltaSeco = d.fsSeco - d.fcSeco;
+            const deltaFrigo = d.fsFrigo - d.fcFrigo;
+            const percSeco = d.fsSeco ? ((d.fcSeco / d.fsSeco) * 100) : 0;
+            const percFrigo = d.fsFrigo ? ((d.fcFrigo / d.fsFrigo) * 100) : 0;
+            return `
+                <tr>
+                    <td><strong>${d.label}</strong></td>
+                    <td>${formatTon(d.fcSeco)}</td>
+                    <td>${formatTon(d.fsSeco)}</td>
+                    <td class="${percSeco <= 100 ? 'text-success' : 'text-danger'}">${percSeco.toFixed(0)}%</td>
+                    <td class="${deltaSeco >= 0 ? 'text-success' : 'text-danger'}">${formatTon(deltaSeco)}</td>
+                    <td>${formatTon(d.fcFrigo)}</td>
+                    <td>${formatTon(d.fsFrigo)}</td>
+                    <td class="${percFrigo <= 100 ? 'text-success' : 'text-danger'}">${percFrigo.toFixed(0)}%</td>
+                    <td class="${deltaFrigo >= 0 ? 'text-success' : 'text-danger'}">${formatTon(deltaFrigo)}</td>
+                </tr>`;
+        }).join('');
+    }
+
+    function refreshSupCons() {
+        renderSupConsChart();
+        renderSupConsTable();
+    }
+
+    // Inicialização
+    ensureSelection();
+    refreshSupCons();
+
+    supConsUpdateBtn?.addEventListener('click', refreshSupCons);
+    supConsSelectAllBtn?.addEventListener('click', () => {
+        if (!supConsSelect) return;
+        Array.from(supConsSelect.options).forEach(o => { o.selected = true; });
+        refreshSupCons();
+    });
+    supConsClearBtn?.addEventListener('click', () => {
+        if (!supConsSelect) return;
+        Array.from(supConsSelect.options).forEach(o => { o.selected = false; });
+        refreshSupCons();
+    });
+
+    chartTypeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentType = btn.getAttribute('data-chart-type') || 'bar';
+            refreshSupCons();
+        });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

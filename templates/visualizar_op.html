@@ -1,0 +1,983 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-building"></i> {{ orgao['nome'] }}</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('index') }}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <button onclick="window.print()" class="btn btn-outline no-print">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+        {% if session.nivel_acesso == 'admin' %}
+        <form action="{{ url_for('excluir_orgao', id=orgao['id']) }}" method="POST" onsubmit="return confirm('Confirma excluir o cadastro {{ orgao['sigla'] or orgao['nome'] }}? Esta ação é definitiva.');">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Excluir cadastro
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Alertas -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'error' }}">
+                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'info-circle' }}"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Estatísticas resumidas -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-value">{{ orgao['efetivo_atendimento'] }}</span>
+        <span class="stat-label">Militares no Efetivo</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ orgao['subordinacao'] }}</span>
+        <span class="stat-label">Subordinação</span>
+    </div>
+    <div class="stat-card">
+        {% if orgao['sigla'] %}
+        <span class="stat-value">{{ orgao['sigla'] }}</span>
+        <span class="stat-label">Sigla</span>
+        {% else %}
+        <span class="stat-value">-</span>
+        <span class="stat-label">Sigla</span>
+        {% endif %}
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ viaturas|length }}</span>
+        <span class="stat-label">Viaturas</span>
+    </div>
+</div>
+
+<!-- Informações Gerais -->
+<div class="form-section">
+    <h2><i class="fas fa-info-circle"></i> Informações Gerais</h2>
+    
+    <div class="info-grid">
+        <div class="info-item">
+            <strong><i class="fas fa-building"></i> Órgão:</strong> 
+            {{ orgao['nome'] }}
+        </div>
+        <div class="info-item">
+            <strong><i class="fas fa-sitemap"></i> Subordinação:</strong> 
+            {{ orgao['subordinacao'] }}
+        </div>
+        {% if orgao['sigla'] %}
+        <div class="info-item">
+            <strong><i class="fas fa-tag"></i> Sigla:</strong> 
+            {{ orgao['sigla'] }}
+        </div>
+        {% endif %}
+        {% if orgao['nome_completo'] %}
+        <div class="info-item">
+            <strong><i class="fas fa-file-signature"></i> Nome Completo:</strong> 
+            {{ orgao['nome_completo'] }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="info-grid">
+        {% if orgao['data_criacao'] %}
+        <div class="info-item">
+            <strong><i class="fas fa-calendar-plus"></i> Data de Criação:</strong> 
+            {{ orgao['data_criacao'] }}
+        </div>
+        {% endif %}
+        <div class="info-item">
+            <strong><i class="fas fa-ruler-combined"></i> Área Edificável:</strong> 
+            {{ orgao['area_edificavel_disponivel'] or 0 }} m²
+        </div>
+        <div class="info-item">
+            <strong><i class="fas fa-calendar-alt"></i> Data de Cadastro:</strong> 
+            {{ orgao['data_cadastro'].split()[0] if orgao['data_cadastro'] else 'N/A' }}
+        </div>
+        <div class="info-item">
+            <strong><i class="fas fa-clock"></i> Hora do Cadastro:</strong> 
+            {{ orgao['data_cadastro'].split()[1][:5] if orgao['data_cadastro'] and ' ' in orgao['data_cadastro'] else 'N/A' }}
+        </div>
+    </div>
+    
+    {% if orgao['historico'] %}
+    <div class="mt-3">
+        <h3><i class="fas fa-history"></i> Histórico</h3>
+        <div class="info-item">
+            {{ orgao['historico'] }}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if orgao['missao'] %}
+    <div class="mt-3">
+        <h3><i class="fas fa-bullseye"></i> Missão</h3>
+        <div class="info-item">
+            {{ orgao['missao'] }}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if fotos_area %}
+    <div class="mt-4">
+        <h3><i class="fas fa-camera"></i> Fotos da Área Edificável</h3>
+        <div class="photo-grid">
+            {% for foto in fotos_area %}
+            <div class="photo-item">
+                <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                     alt="Área edificável" class="info-image" 
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<p class=\'text-danger\'><i class=\'fas fa-exclamation-triangle\'></i> Imagem não disponível</p>'">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Fatores de Consumo e Suprimento -->
+<div class="form-section">
+    <h2><i class="fas fa-chart-line"></i> Fatores de Consumo e Suprimento</h2>
+    
+    <div class="consumo-suprimento-grid">
+        <div class="consumo-suprimento-item">
+            <strong><i class="fas fa-warehouse"></i> Consumo Mensal de Secos:</strong>
+            <div class="tonelada-value">{{ "%.2f"|format(orgao['consumo_secos_mensal'] or 0) }} ton</div>
+        </div>
+        <div class="consumo-suprimento-item">
+            <strong><i class="fas fa-snowflake"></i> Consumo Mensal de Frigorificados:</strong>
+            <div class="tonelada-value">{{ "%.2f"|format(orgao['consumo_frigorificados_mensal'] or 0) }} ton</div>
+        </div>
+        <div class="consumo-suprimento-item">
+            <strong><i class="fas fa-truck-loading"></i> Suprimento Mensal de Secos:</strong>
+            <div class="tonelada-value">{{ "%.2f"|format(orgao['suprimento_secos_mensal'] or 0) }} ton</div>
+        </div>
+        <div class="consumo-suprimento-item">
+            <strong><i class="fas fa-temperature-low"></i> Suprimento Mensal de Frigorificados:</strong>
+            <div class="tonelada-value">{{ "%.2f"|format(orgao['suprimento_frigorificados_mensal'] or 0) }} ton</div>
+        </div>
+    </div>
+    
+    <!-- Resumo -->
+    <div class="info-grid mt-4">
+        <div class="info-item">
+            <strong>Total Consumo Mensal:</strong>
+            {{ "%.2f"|format((orgao['consumo_secos_mensal'] or 0) + (orgao['consumo_frigorificados_mensal'] or 0)) }} ton
+        </div>
+        <div class="info-item">
+            <strong>Total Suprimento Mensal:</strong>
+            {{ "%.2f"|format((orgao['suprimento_secos_mensal'] or 0) + (orgao['suprimento_frigorificados_mensal'] or 0)) }} ton
+        </div>
+        <div class="info-item">
+            <strong>Balanço Mensal:</strong>
+            {% set balanco = (orgao['suprimento_secos_mensal'] or 0) + (orgao['suprimento_frigorificados_mensal'] or 0) - (orgao['consumo_secos_mensal'] or 0) - (orgao['consumo_frigorificados_mensal'] or 0) %}
+            <span class="{{ 'text-success' if balanco >= 0 else 'text-danger' }}">
+                {{ "%+.2f"|format(balanco) }} ton
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- NOVA SEÇÃO: Energia Elétrica e Geradores -->
+<div class="form-section">
+    <h2><i class="fas fa-bolt"></i> Energia Elétrica e Geradores</h2>
+    
+    {% if energia %}
+    <div class="info-grid mb-4">
+        <div class="info-item">
+            <strong><i class="fas fa-plug"></i> Dimensionamento:</strong>
+            {% if energia['dimensionamento_adequado'] == 'adequado' %}
+                <span class="badge badge-success">Adequado</span>
+            {% elif energia['dimensionamento_adequado'] == 'insuficiente' %}
+                <span class="badge badge-warning">Insuficiente</span>
+            {% else %}
+                <span class="badge badge-danger">Precário</span>
+            {% endif %}
+        </div>
+        {% if energia['capacidade_total_kva'] %}
+        {% endif %}
+    </div>
+    
+    {% if energia['observacoes_energia'] %}
+    <div class="info-item">
+        <strong><i class="fas fa-sticky-note"></i> Observações:</strong>
+        {{ energia['observacoes_energia'] }}
+    </div>
+    {% endif %}
+    {% endif %}
+    
+    {% if geradores %}
+    <h3 class="mt-4 mb-3"><i class="fas fa-generator"></i> Geradores ({{ geradores|length }})</h3>
+    
+    {% for gerador in geradores %}
+    <div class="gerador-card mb-3">
+        <div class="gerador-header">
+            <h4><i class="fas fa-generator"></i> Gerador {{ loop.index }}</h4>
+            {% if gerador['situacao'] == 'operacional' %}
+                <span class="badge badge-success">Operacional</span>
+            {% elif gerador['situacao'] == 'em_manutencao' %}
+                <span class="badge badge-warning">Em manutenção</span>
+            {% elif gerador['situacao'] == 'baixada' %}
+                <span class="badge badge-danger">Baixada</span>
+            {% else %}
+                <span class="badge badge-secondary">{{ gerador['situacao'] }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="info-grid mt-2">
+            <div class="info-item">
+                <strong>Capacidade:</strong> {{ "%.1f"|format(gerador['capacidade_kva']) }} KVA
+            </div>
+            {% if gerador['marca_modelo'] %}
+            <div class="info-item">
+                <strong>Marca/Modelo:</strong> {{ gerador['marca_modelo'] }}
+            </div>
+            {% endif %}
+            {% if gerador['ano_fabricacao'] %}
+            <div class="info-item">
+                <strong>Ano Fabricação:</strong> {{ gerador['ano_fabricacao'] }}
+            </div>
+            {% endif %}
+            {% if gerador['valor_recuperacao'] %}
+            <div class="info-item">
+                <strong>Valor recuperação:</strong> R$ {{ "%.2f"|format(gerador['valor_recuperacao']) }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <strong>Operação 24h:</strong>
+                {% if gerador['pode_operar_24h'] == 1 %}
+                    <span class="badge badge-success">Sim</span>
+                {% else %}
+                    <span class="badge badge-warning">Não</span>
+                {% endif %}
+            </div>
+            {% if gerador['horas_operacao_continuas'] %}
+            <div class="info-item">
+                <strong>Horas Contínuas:</strong> {{ gerador['horas_operacao_continuas'] }}h
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if gerador['ultima_manutencao'] or gerador['proxima_manutencao'] %}
+        <div class="info-grid">
+            {% if gerador['ultima_manutencao'] %}
+            <div class="info-item">
+                <strong>Última Manutenção:</strong> {{ gerador['ultima_manutencao'] }}
+            </div>
+            {% endif %}
+            {% if gerador['proxima_manutencao'] %}
+            <div class="info-item">
+                <strong>Próxima Manutenção:</strong> {{ gerador['proxima_manutencao'] }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if gerador['observacoes'] %}
+        <div class="info-item mt-2">
+            <strong>Observações:</strong> {{ gerador['observacoes'] }}
+        </div>
+        {% endif %}
+        
+        <!-- Fotos do gerador -->
+        {% if gerador_fotos and gerador_fotos[gerador['id']] %}
+        <div class="photo-grid mt-3">
+            {% for foto in gerador_fotos[gerador['id']] %}
+            <div class="photo-item">
+                <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                     alt="Foto gerador" class="info-image"
+                     onerror="this.style.display='none'">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <!-- Resumo dos geradores -->
+    <div class="info-grid mt-4">
+        <div class="info-item">
+            <strong>Total Geradores:</strong> {{ geradores|length }}
+        </div>
+        <div class="info-item">
+            <strong>Capacidade Total:</strong>
+            {{ "%.1f"|format(geradores|sum(attribute='capacidade_kva')) }} KVA
+        </div>
+        <div class="info-item">
+            <strong>Operacionais:</strong>
+            {{ geradores|selectattr('situacao', 'equalto', 'operacional')|list|length }}
+        </div>
+        <div class="info-item">
+            <strong>Operam 24h:</strong>
+            {{ geradores|selectattr('pode_operar_24h', 'equalto', 1)|list|length }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Seção de Pessoal -->
+{% if pessoal %}
+<div class="form-section">
+    <h2><i class="fas fa-users"></i> Quadro de Pessoal ({{ pessoal|sum(attribute='quantidade') }})</h2>
+    
+    <div class="info-grid mb-3">
+        <div class="info-item">
+            <strong>Total de Pessoal:</strong> {{ pessoal|sum(attribute='quantidade') }}
+        </div>
+        <div class="info-item">
+            <strong>Carreira:</strong> 
+            {{ pessoal|selectattr('tipo_servico', 'equalto', 'carreira')|sum(attribute='quantidade') }}
+        </div>
+        <div class="info-item">
+            <strong>Temporários:</strong> 
+            {{ pessoal|selectattr('tipo_servico', 'equalto', 'temporario')|sum(attribute='quantidade') }}
+        </div>
+    </div>
+    
+    <div class="items-grid">
+        {% for p in pessoal %}
+        <div class="item-card">
+            <strong><i class="fas fa-user"></i> 
+                {% if p['posto_graduacao'] == 'general' %}General
+                {% elif p['posto_graduacao'] == 'coronel' %}Coronel
+                {% elif p['posto_graduacao'] == 'tenente_coronel' %}Tenente-Coronel
+                {% elif p['posto_graduacao'] == 'major' %}Major
+                {% elif p['posto_graduacao'] == 'capitao' %}Capitão
+                {% elif p['posto_graduacao'] == 'primeiro_tenente' %}1º Tenente
+                {% elif p['posto_graduacao'] == 'segundo_tenente' %}2º Tenente
+                {% elif p['posto_graduacao'] == 'aspirante' %}Aspirante
+                {% elif p['posto_graduacao'] == 'subtenente' %}Subtenente
+                {% elif p['posto_graduacao'] == 'primeiro_sargento' %}1º Sargento
+                {% elif p['posto_graduacao'] == 'segundo_sargento' %}2º Sargento
+                {% elif p['posto_graduacao'] == 'terceiro_sargento' %}3º Sargento
+                {% elif p['posto_graduacao'] == 'cabo' %}Cabo
+                {% elif p['posto_graduacao'] == 'taifeiro' %}Taifeiro
+                {% elif p['posto_graduacao'] == 'soldado' %}Soldado
+                {% elif p['posto_graduacao'] == 'civil' %}Servidor Civil
+                {% else %}{{ p['posto_graduacao'] }}
+                {% endif %}
+            </strong>
+            <div class="mt-2">
+                <small class="detalhe-label">Quantidade:</small>
+                <div>{{ p['quantidade'] }}</div>
+            </div>
+            <div class="mt-1">
+                <small class="detalhe-label">Arma/Quadro:</small>
+                <div>{{ p['arma_quadro_servico'] }}</div>
+            </div>
+            {% if p['especialidade'] %}
+            <div class="mt-1">
+                <small class="detalhe-label">Especialidade:</small>
+                <div>{{ p['especialidade'] }}</div>
+            </div>
+            {% endif %}
+            {% if p['funcao'] %}
+            <div class="mt-1">
+                <small class="detalhe-label">Função:</small>
+                <div>{{ p['funcao'] }}</div>
+            </div>
+            {% endif %}
+            <div class="mt-1">
+                <small class="detalhe-label">Tipo:</small>
+                <div>
+                    {% if p['tipo_servico'] == 'carreira' %}
+                        <span class="badge badge-success">Carreira</span>
+                    {% else %}
+                        <span class="badge badge-warning">Temporário</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if p['observacoes'] %}
+            <div class="mt-1">
+                <small class="detalhe-label">Observações:</small>
+                <div><small>{{ p['observacoes'] }}</small></div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Seção de Viaturas ATUALIZADA -->
+{% if viaturas %}
+<div class="form-section">
+    <h2><i class="fas fa-truck"></i> Frota de Viaturas ({{ viaturas|length }})</h2>
+    
+    <div class="info-grid mb-3">
+        <div class="info-item">
+            <strong>Total Viaturas:</strong> {{ viaturas|length }}
+        </div>
+        <div class="info-item">
+            <strong>Operacionais:</strong> 
+            {{ viaturas|selectattr('situacao', 'equalto', 'operacional')|list|length }}
+        </div>
+        <div class="info-item">
+            <strong>Em Manutenção:</strong> 
+            {{ viaturas|selectattr('situacao', 'equalto', 'em_manutencao')|list|length }}
+        </div>
+        <div class="info-item">
+            <strong>Baixadas:</strong> 
+            {{ viaturas|selectattr('situacao', 'equalto', 'baixada')|list|length }}
+        </div>
+    </div>
+    
+    {% for viatura in viaturas %}
+    <div class="viatura-card">
+        <div class="viatura-header">
+            <h3>
+                <i class="fas fa-truck"></i>
+                EB: {{ viatura['placa'] }} - {{ viatura['tipo_veiculo'] }}{% if viatura['especializacao'] %} ({{ viatura['especializacao'] }}){% endif %}
+            </h3>
+            <span class="badge badge-{{ 'success' if viatura['situacao'] == 'operacional' else 'warning' if viatura['situacao'] == 'em_manutencao' else 'danger' }}">
+                {{ viatura['situacao']|replace('_', ' ')|title }}
+            </span>
+        </div>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <strong><i class="fas fa-id-badge"></i> Código EB:</strong> 
+                {{ viatura['placa'] }}
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-truck"></i> Tipo:</strong> 
+                {{ viatura['tipo_veiculo'] }}
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-car"></i> Placa:</strong> 
+                {{ viatura['placa'] }}
+            </div>
+            <div class="info-item">
+                <strong><i class="fas fa-industry"></i> Marca/Modelo:</strong> 
+                {{ viatura['marca'] or '' }} {{ viatura['modelo'] or '' }}
+            </div>
+        </div>
+
+        <div class="info-grid">
+            {% if viatura['capacidade_carga_kg'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-weight-hanging"></i> Capacidade Carga:</strong> 
+                {{ "%.2f"|format(viatura['capacidade_carga_kg'] or 0) }} kg
+            </div>
+            {% endif %}
+            {% if viatura['lotacao_pessoas'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-users"></i> Lotação:</strong> 
+                {{ viatura['lotacao_pessoas'] }} pessoas
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <strong><i class="fas fa-snowflake"></i> Refrigeração:</strong> 
+                {{ viatura['tipo_refrigeracao'] or 'Não refrigerado' }}
+            </div>
+            {% if viatura['temperatura_min'] or viatura['temperatura_max'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-thermometer-half"></i> Faixa de Temperatura:</strong> 
+                {{ viatura['temperatura_min'] or '' }}°C a {{ viatura['temperatura_max'] or '' }}°C
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <strong><i class="fas fa-tachometer-alt"></i> KM Atual:</strong> 
+                {{ viatura['km_atual'] or 'N/A' }}
+            </div>
+            {% if viatura['numero_inventario'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-hashtag"></i> Inventário:</strong> 
+                {{ viatura['numero_inventario'] }}
+            </div>
+            {% endif %}
+            {% if viatura['patrimonio'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-barcode"></i> Patrimônio:</strong> 
+                {{ viatura['patrimonio'] }}
+            </div>
+            {% endif %}
+            {% if viatura['valor_recuperacao'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-money-bill-wave"></i> Valor recuperação:</strong>
+                R$ {{ "%.2f"|format(viatura['valor_recuperacao']) }}
+            </div>
+            {% endif %}
+            <div class="info-item">
+                <strong><i class="fas fa-calendar-check"></i> Próxima Manutenção:</strong> 
+                {{ viatura['proxima_manutencao'] or 'N/A' }}
+            </div>
+        </div>
+
+        {% if viatura['observacoes'] %}
+        <div class="info-item mt-2">
+            <strong><i class="fas fa-sticky-note"></i> Observações:</strong> 
+            {{ viatura['observacoes'] }}
+        </div>
+        {% endif %}
+
+        <!-- Fotos da viatura -->
+        {% if viatura_fotos and viatura_fotos[viatura['id']] %}
+        <div class="photo-grid mt-4">
+            {% for foto in viatura_fotos[viatura['id']] %}
+            <div class="photo-item">
+                <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                     alt="Foto viatura" class="info-image"
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<p class=\'text-danger\'><i class=\'fas fa-exclamation-triangle\'></i> Imagem não disponível</p>'">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Seção de Instalações ATUALIZADA -->
+{% if instalacoes %}
+<div class="form-section">
+    <h2><i class="fas fa-warehouse"></i> Instalações ({{ instalacoes|length }})</h2>
+    
+    {% for instalacao in instalacoes %}
+    <div class="instalacao-info">
+        <div class="instalacao-header">
+            <h3>
+                {% if 'deposito' in instalacao['tipo_instalacao'] %}
+                <i class="fas fa-warehouse"></i>
+                {% elif 'posto' in instalacao['tipo_instalacao'] %}
+                <i class="fas fa-gas-pump"></i>
+                {% elif 'alojamento' in instalacao['tipo_instalacao'] %}
+                <i class="fas fa-bed"></i>
+                {% elif 'almoxarifado' in instalacao['tipo_instalacao'] %}
+                <i class="fas fa-boxes"></i>
+                {% elif 'garagem' in instalacao['tipo_instalacao'] %}
+                <i class="fas fa-warehouse"></i>
+                {% elif 'saude' in instalacao['tipo_instalacao'] %}
+                <i class="fas fa-hospital"></i>
+                {% else %}
+                <i class="fas fa-building"></i>
+                {% endif %}
+                
+                {% if instalacao['tipo_instalacao'] == 'deposito_cl1_seco' %}Depósito Cl I (Seco)
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl1_frigo' %}Depósito Cl I (Frigorificado)
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl2' %}Depósito Cl II
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl3' %}Depósito Cl III
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl4' %}Depósito Cl IV
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl5' %}Depósito Cl V
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl6' %}Depósito Cl VI
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl7' %}Depósito Cl VII
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl8' %}Depósito Cl VIII
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl9' %}Depósito Cl IX
+                {% elif instalacao['tipo_instalacao'] == 'deposito_cl10' %}Depósito Cl X
+                {% elif instalacao['tipo_instalacao'] == 'posto_combustivel' %}Posto de Combustível
+                {% elif instalacao['tipo_instalacao'] == 'posto_saude' %}Posto de Saúde
+                {% elif instalacao['tipo_instalacao'] == 'corpo_guard' %}Corpo da Guarda
+                {% elif instalacao['tipo_instalacao'] == 'pc_cmt' %}PC Cmt
+                {% elif instalacao['tipo_instalacao'] == 'secao_adm' %}Seção Administrativa
+                {% elif instalacao['tipo_instalacao'] == 'alojamento' %}Alojamento
+                {% elif instalacao['tipo_instalacao'] == 'aprovisionamento' %}Aprovisionamento
+                {% elif instalacao['tipo_instalacao'] == 'almoxarifado' %}Almoxarifado
+                {% elif instalacao['tipo_instalacao'] == 'garagem' %}Garagem
+                {% elif instalacao['tipo_instalacao'] == 'oficina_mecanica' %}Oficina Mecânica
+                {% elif instalacao['tipo_instalacao'] == 'oficina_eletrica' %}Oficina Elétrica
+                {% elif instalacao['tipo_instalacao'] == 'cozinha' %}Cozinha
+                {% elif instalacao['tipo_instalacao'] == 'refeitorio' %}Refeitório
+                {% elif instalacao['tipo_instalacao'] == 'cantina' %}Cantina
+                {% elif instalacao['tipo_instalacao'] == 'estacionamento' %}Estacionamento
+                {% elif instalacao['tipo_instalacao'] == 'torre_vigilancia' %}Torre de Vigilância
+                {% elif instalacao['tipo_instalacao'] == 'central_energia' %}Central de Energia
+                {% elif instalacao['tipo_instalacao'] == 'laboratorio' %}Laboratório
+                {% elif instalacao['tipo_instalacao'] == 'sala_reuniao' %}Sala de Reunião
+                {% elif instalacao['tipo_instalacao'] == 'liab' %}LIAB
+                {% else %}{{ instalacao['tipo_instalacao'] }}
+                {% endif %}
+            </h3>
+            {% if instalacao['data_construcao'] %}
+            <span class="badge">
+                <i class="fas fa-calendar"></i> {{ instalacao['data_construcao'] }}
+            </span>
+            {% endif %}
+        </div>
+        
+        {% if instalacao['descricao'] %}
+        <div class="info-item mt-2">
+            <strong><i class="fas fa-align-left"></i> Descrição:</strong> 
+            {{ instalacao['descricao'] }}
+        </div>
+        {% endif %}
+        
+        <div class="info-grid mt-2">
+            {% if instalacao['capacidade_volumetrica'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-cube"></i> Capacidade:</strong> 
+                {{ "%.2f"|format(instalacao['capacidade_volumetrica'] or 0) }} m³
+            </div>
+            {% endif %}
+            {% if instalacao['largura'] and instalacao['comprimento'] and instalacao['altura'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-ruler-combined"></i> Dimensões:</strong> 
+                {{ "%.2f"|format(instalacao['largura'] or 0) }}m × 
+                {{ "%.2f"|format(instalacao['comprimento'] or 0) }}m × 
+                {{ "%.2f"|format(instalacao['altura'] or 0) }}m
+            </div>
+            {% endif %}
+            {% if instalacao['verticalizacao'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-arrow-up"></i> Verticalização:</strong> 
+                {{ instalacao['verticalizacao'] }}
+            </div>
+            {% endif %}
+            {% if instalacao['tipo_cobertura'] %}
+            <div class="info-item">
+                <strong><i class="fas fa-hard-hat"></i> Cobertura:</strong> 
+                {{ instalacao['tipo_cobertura'] }}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Fotos da instalação -->
+        {% if instalacao['fotos'] %}
+        <div class="photo-grid mt-4">
+            {% for foto in instalacao['fotos'] %}
+            <div class="photo-item">
+                <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                     alt="Foto instalação" class="info-image"
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<p class=\'text-danger\'><i class=\'fas fa-exclamation-triangle\'></i> Imagem não disponível</p>'">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Empilhadeiras (só para depósitos) -->
+        {% if 'deposito' in instalacao['tipo_instalacao'] and instalacao['empilhadeiras'] %}
+        <div class="sub-section mt-4">
+            <h4><i class="fas fa-forklift"></i> Empilhadeiras ({{ instalacao['empilhadeiras']|sum(attribute='quantidade') }})</h4>
+            <div class="items-grid">
+                {% for emp in instalacao['empilhadeiras'] %}
+                <div class="item-card">
+                    <strong><i class="fas fa-forklift"></i> {{ emp['tipo'] }}</strong>
+                    <div class="mt-2">
+                        <small class="detalhe-label">Capacidade:</small>
+                        <div>{{ "%.2f"|format(emp['capacidade'] or 0) }} kg</div>
+                    </div>
+                    <div class="mt-1">
+                        <small class="detalhe-label">Quantidade:</small>
+                        <div>{{ emp['quantidade'] }}</div>
+                    </div>
+                    <div class="mt-1">
+                        <small class="detalhe-label">Situação:</small>
+                        <div>
+                            {% if emp['situacao'] == 'disponivel' %}
+                                <span class="badge badge-success">Disponível</span>
+                            {% elif emp['situacao'] == 'indisponivel_recuperavel' %}
+                                <span class="badge badge-warning">Indisponível (Recuperável)</span>
+                                {% if emp['valor_recuperacao'] %}
+                                <div><small>Valor recuperação: R$ {{ "%.2f"|format(emp['valor_recuperacao']) }}</small></div>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-danger">Indisponível para Descarga</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if emp['fotos'] %}
+                    <div class="photo-grid mt-2">
+                        {% for foto in emp['fotos'] %}
+                        <div class="photo-item">
+                            <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                                 alt="Foto empilhadeira" class="item-image"
+                                 onerror="this.style.display='none'; this.innerHTML='<p class=\'text-danger\'><i class=\'fas fa-exclamation-triangle\'></i> Sem foto</p>'">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Sistemas de Segurança (só para depósitos) -->
+        {% if 'deposito' in instalacao['tipo_instalacao'] and instalacao['sistemas'] %}
+        <div class="sub-section mt-4">
+            <h4><i class="fas fa-shield-alt"></i> Sistemas de Segurança ({{ instalacao['sistemas']|length }})</h4>
+            <div class="items-grid">
+                {% for sistema in instalacao['sistemas'] %}
+                <div class="item-card">
+                    <strong><i class="fas fa-shield-alt"></i> {{ sistema['tipo'] }}</strong>
+                    {% if sistema['descricao'] %}
+                    <div class="mt-2">
+                        <small class="detalhe-label">Descrição:</small>
+                        <div>{{ sistema['descricao'] }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="mt-1">
+                        <small class="detalhe-label">Situação:</small>
+                        <div>
+                            {% if sistema['situacao'] == 'operacional' %}
+                                <span class="badge badge-success">Operacional</span>
+                            {% elif sistema['situacao'] == 'em_manutencao' %}
+                                <span class="badge badge-warning">Em Manutenção</span>
+                            {% elif sistema['situacao'] == 'inoperante' %}
+                                <span class="badge badge-danger">Inoperante</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if sistema['ultima_manutencao'] or sistema['proxima_manutencao'] %}
+                    <div class="mt-1">
+                        <small class="detalhe-label">Manutenção:</small>
+                        <div>
+                            {% if sistema['ultima_manutencao'] %}
+                            <div><small>Última: {{ sistema['ultima_manutencao'] }}</small></div>
+                            {% endif %}
+                            {% if sistema['proxima_manutencao'] %}
+                            <div><small>Próxima: {{ sistema['proxima_manutencao'] }}</small></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if sistema['fotos'] %}
+                    <div class="photo-grid mt-2">
+                        {% for foto in sistema['fotos'] %}
+                        <div class="photo-item">
+                            <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                                 alt="Foto sistema" class="item-image"
+                                 onerror="this.style.display='none'; this.innerHTML='<p class=\'text-danger\'><i class=\'fas fa-exclamation-triangle\'></i> Sem foto</p>'">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Equipamentos de Unitização (só para depósitos) -->
+        {% if 'deposito' in instalacao['tipo_instalacao'] and instalacao['equipamentos'] %}
+        <div class="sub-section mt-4">
+            <h4><i class="fas fa-boxes"></i> Equipamentos de Unitização ({{ instalacao['equipamentos']|sum(attribute='quantidade') }})</h4>
+            <div class="items-grid">
+                {% for equipamento in instalacao['equipamentos'] %}
+                <div class="item-card">
+                    <strong><i class="fas fa-boxes"></i> {{ equipamento['tipo'] }}</strong>
+                    <div class="mt-2">
+                        <small class="detalhe-label">Quantidade:</small>
+                        <div>{{ equipamento['quantidade'] }}</div>
+                    </div>
+                    {% if equipamento['capacidade_kg'] %}
+                    <div class="mt-1">
+                        <small class="detalhe-label">Capacidade:</small>
+                        <div>{{ "%.2f"|format(equipamento['capacidade_kg'] or 0) }} kg</div>
+                    </div>
+                    {% endif %}
+                    <div class="mt-1">
+                        <small class="detalhe-label">Situação:</small>
+                        <div>
+                            {% if equipamento['situacao'] == 'operacional' %}
+                                <span class="badge badge-success">Operacional</span>
+                            {% elif equipamento['situacao'] == 'em_manutencao' %}
+                                <span class="badge badge-warning">Em Manutenção</span>
+                            {% elif equipamento['situacao'] == 'inoperante' %}
+                                <span class="badge badge-danger">Inoperante</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if equipamento['observacoes'] %}
+                    <div class="mt-1">
+                        <small class="detalhe-label">Observações:</small>
+                        <div>{{ equipamento['observacoes'] }}</div>
+                    </div>
+                    {% endif %}
+                    {% if equipamento['fotos'] %}
+                    <div class="photo-grid mt-2">
+                        {% for foto in equipamento['fotos'] %}
+                        <div class="photo-item">
+                            <img src="{{ url_for('uploaded_file', filename=foto) }}" 
+                                 alt="Foto equipamento" class="item-image"
+                                 onerror="this.style.display='none'; this.innerHTML='<p class=\'text-danger\'><i class=\'fas fa-exclamation-triangle\'></i> Sem foto</p>'">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    <!-- Resumo das Instalações -->
+    <div class="info-grid mt-4">
+        <div class="info-item">
+            <strong>Total de Instalações:</strong> {{ instalacoes|length }}
+        </div>
+        <div class="info-item">
+            <strong>Depósitos:</strong> 
+            {{ instalacoes|selectattr('tipo_instalacao', 'containing', 'deposito')|list|length }}
+        </div>
+        <div class="info-item">
+            <strong>Outras Instalações:</strong> 
+            {{ instalacoes|rejectattr('tipo_instalacao', 'containing', 'deposito')|list|length }}
+        </div>
+        <div class="info-item">
+            <strong>Capacidade Total:</strong> 
+            {{ "%.2f"|format(instalacoes|sum(attribute='capacidade_volumetrica')) }} m³
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-warehouse"></i>
+    <h3>Nenhuma instalação cadastrada</h3>
+    <p>Este órgão não possui instalações cadastradas.</p>
+</div>
+{% endif %}
+
+<!-- Botão de ação -->
+<div class="form-actions no-print">
+    <a href="{{ url_for('index') }}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Voltar para Lista
+    </a>
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="fas fa-print"></i> Imprimir Relatório
+    </button>
+</div>
+
+<!-- Informações de impressão -->
+<div class="print-only" style="display: none;">
+    <hr>
+    <p class="text-center">
+        <small>
+            Relatório gerado em: {{ now.strftime('%d/%m/%Y %H:%M') if now else '' }}<br>
+            Sistema de Cadastro de Órgãos Provedores
+        </small>
+    </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Adicionar funcionalidade para o botão de impressão
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar impressão
+    const printBtn = document.querySelector('[onclick="window.print()"]');
+    if (printBtn) {
+        printBtn.addEventListener('click', function() {
+            // Adicionar data atual ao relatório de impressão
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR');
+            const printDate = document.querySelector('.print-only');
+            if (printDate) {
+                printDate.innerHTML = `<hr><p class="text-center"><small>Relatório gerado em: ${dateStr}<br>Sistema de Cadastro de Órgãos Provedores</small></p>`;
+            }
+        });
+    }
+    
+    // Configurar galeria de fotos
+    setupPhotoGallery();
+});
+
+// Função para configurar galeria de fotos
+function setupPhotoGallery() {
+    // Adicionar funcionalidade de clique nas fotos para ampliar
+    const photos = document.querySelectorAll('.info-image, .item-image');
+    photos.forEach(photo => {
+        photo.style.cursor = 'pointer';
+        photo.addEventListener('click', function() {
+            showPhotoModal(this.src);
+        });
+    });
+}
+
+// Função para mostrar foto em modal
+function showPhotoModal(src) {
+    // Criar modal se não existir
+    let modal = document.getElementById('photoModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'photoModal';
+        modal.className = 'photo-modal';
+        modal.innerHTML = `
+            <div class="photo-modal-close" onclick="closePhotoModal()">&times;</div>
+            <img src="" alt="Foto ampliada" class="photo-modal-img">
+        `;
+        document.body.appendChild(modal);
+        
+        // Adicionar estilo ao modal
+        const style = document.createElement('style');
+        style.textContent = `
+            .photo-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.9);
+                z-index: 10000;
+                justify-content: center;
+                align-items: center;
+            }
+            .photo-modal.show {
+                display: flex;
+            }
+            .photo-modal-img {
+                max-width: 90%;
+                max-height: 90%;
+                border-radius: 4px;
+            }
+            .photo-modal-close {
+                position: absolute;
+                top: 20px;
+                right: 30px;
+                color: white;
+                font-size: 40px;
+                cursor: pointer;
+                z-index: 10001;
+            }
+            .photo-modal-close:hover {
+                color: #ccc;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Mostrar a imagem no modal
+    const modalImg = modal.querySelector('.photo-modal-img');
+    modalImg.src = src;
+    modal.classList.add('show');
+    
+    // Fechar modal ao clicar fora da imagem
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closePhotoModal();
+        }
+    });
+    
+    // Fechar com ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closePhotoModal();
+        }
+    });
+}
+
+function closePhotoModal() {
+    const modal = document.getElementById('photoModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+// Exportar funções globalmente
+window.showPhotoModal = showPhotoModal;
+window.closePhotoModal = closePhotoModal;
+</script>
+{% endblock %}
