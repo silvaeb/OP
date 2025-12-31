@@ -1107,14 +1107,23 @@ def admin_backup():
         return redirect(url_for('admin'))
 
 
-@app.route('/admin/relatorios', methods=['GET'])
+
+# Nova rota para exportar relatório da análise atual (CSV)
+@app.route('/analise/relatorio', methods=['GET'])
 @login_required
-@admin_required
-def admin_relatorios():
-    """Exporta relatório CSV com dados gerenciais dos OP."""
+def analise_relatorio():
+    """Exporta relatório CSV da análise atual (dados dos OP)."""
     db = database.get_db()
     try:
-        rows = db.execute('''
+        # Filtros opcionais via query string
+        filtro_tipo = request.args.get('tipo', 'geral')
+        filtro_ids = request.args.get('ids')
+        ids_list = []
+        if filtro_ids:
+            ids_list = [int(i) for i in filtro_ids.split(',') if i.isdigit()]
+
+        # Query base
+        query = '''
             SELECT o.id, o.nome, o.sigla, o.subordinacao, o.unidade_gestora, o.codom,
                    o.efetivo_atendimento, o.capacidade_total_toneladas, o.capacidade_total_toneladas_seco,
                    o.consumo_secos_mensal, o.consumo_frigorificados_mensal,
@@ -1138,8 +1147,13 @@ def admin_relatorios():
                 JOIN instalacoes i ON i.id = e.instalacao_id
                 GROUP BY i.orgao_provedor_id
             ) e ON e.orgao_provedor_id = o.id
-            ORDER BY o.nome
-        ''').fetchall()
+        '''
+        params = []
+        if ids_list:
+            query += ' WHERE o.id IN ({})'.format(','.join(['?'] * len(ids_list)))
+            params = ids_list
+        query += ' ORDER BY o.nome'
+        rows = db.execute(query, params).fetchall()
 
         output = io.StringIO()
         header = [
@@ -1166,11 +1180,11 @@ def admin_relatorios():
             output.write(','.join([str(x).replace(',', ' ') for x in line]) + '\n')
 
         resp = Response(output.getvalue(), mimetype='text/csv')
-        resp.headers['Content-Disposition'] = f"attachment; filename=relatorio_op_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        resp.headers['Content-Disposition'] = f"attachment; filename=relatorio_analise_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         return resp
     except Exception as e:
         flash(f'Erro ao gerar relatório: {e}', 'error')
-        return redirect(url_for('admin'))
+        return redirect(url_for('index'))
 
 
 @app.route('/admin/relatorios_viaturas_excel', methods=['GET'])

@@ -1,0 +1,250 @@
+2025-12-31 08:33:34,890 ERROR [app] Exception on /admin [GET]
+Traceback (most recent call last):
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 94, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 105, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 1060, in admin
+    return render_template('admin.html',
+                          total_usuarios=total_usuarios,
+    ...<2 lines>...
+                          ultimos_orgaos=ultimos_orgaos,
+                          ultimos_usuarios=ultimos_usuarios)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 132, in _render
+    rv = template.render(context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "c:\Users\b05330837707\Desktop\OP\templates\base.html", line 131, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 198, in block 'content'
+    <a href="{{ url_for('admin_relatorios') }}" class="btn btn-outline btn-sm">
+    ^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1697, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1686, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 950, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin_relatorios'. Did you mean 'analise_relatorio' instead?
+2025-12-31 08:33:56,539 ERROR [app] Exception on /admin [GET]
+Traceback (most recent call last):
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 94, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 105, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 1060, in admin
+    return render_template('admin.html',
+                          total_usuarios=total_usuarios,
+    ...<2 lines>...
+                          ultimos_orgaos=ultimos_orgaos,
+                          ultimos_usuarios=ultimos_usuarios)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 132, in _render
+    rv = template.render(context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "c:\Users\b05330837707\Desktop\OP\templates\base.html", line 131, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 198, in block 'content'
+    <a href="{{ url_for('admin_relatorios') }}" class="btn btn-outline btn-sm">
+    ^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1697, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1686, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 950, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin_relatorios'. Did you mean 'analise_relatorio' instead?
+2025-12-31 08:37:35,771 ERROR [app] Exception on /admin [GET]
+Traceback (most recent call last):
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 94, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 105, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 1060, in admin
+    return render_template('admin.html',
+                          total_usuarios=total_usuarios,
+    ...<2 lines>...
+                          ultimos_orgaos=ultimos_orgaos,
+                          ultimos_usuarios=ultimos_usuarios)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 132, in _render
+    rv = template.render(context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "c:\Users\b05330837707\Desktop\OP\templates\base.html", line 131, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 198, in block 'content'
+    <a href="{{ url_for('admin_relatorios') }}" class="btn btn-outline btn-sm">
+    ^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1697, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1686, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 950, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin_relatorios'. Did you mean 'analise_relatorio' instead?
+2025-12-31 08:37:54,542 ERROR [app] Exception on /admin [GET]
+Traceback (most recent call last):
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 94, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 105, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 1060, in admin
+    return render_template('admin.html',
+                          total_usuarios=total_usuarios,
+    ...<2 lines>...
+                          ultimos_orgaos=ultimos_orgaos,
+                          ultimos_usuarios=ultimos_usuarios)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 132, in _render
+    rv = template.render(context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "c:\Users\b05330837707\Desktop\OP\templates\base.html", line 131, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 198, in block 'content'
+    <a href="{{ url_for('admin_relatorios') }}" class="btn btn-outline btn-sm">
+    ^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1697, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1686, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 950, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin_relatorios'. Did you mean 'analise_relatorio' instead?
+2025-12-31 08:40:31,983 ERROR [app] Exception on /admin [GET]
+Traceback (most recent call last):
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 94, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 105, in wrapped_view
+    return view(**kwargs)
+  File "c:\Users\b05330837707\Desktop\OP\app.py", line 1060, in admin
+    return render_template('admin.html',
+                          total_usuarios=total_usuarios,
+    ...<2 lines>...
+                          ultimos_orgaos=ultimos_orgaos,
+                          ultimos_usuarios=ultimos_usuarios)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 151, in render_template
+    return _render(app, template, context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 132, in _render
+    rv = template.render(context)
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1295, in render
+    self.environment.handle_exception()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "c:\Users\b05330837707\Desktop\OP\templates\base.html", line 131, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^
+  File "c:\Users\b05330837707\Desktop\OP\templates\admin.html", line 198, in block 'content'
+    <a href="{{ url_for('analise_relatorio') }}" class="btn btn-outline btn-sm">
+    ^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1697, in url_for
+    return self.handle_url_build_error(error, endpoint, values)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\app.py", line 1686, in url_for
+    rv = url_adapter.build(  # type: ignore[union-attr]
+        endpoint,
+    ...<3 lines>...
+        force_external=_external,
+    )
+  File "C:\Users\b05330837707\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\routing\map.py", line 950, in build
+    raise BuildError(endpoint, values, method, self)
+werkzeug.routing.exceptions.BuildError: Could not build url for endpoint 'admin_relatorios'. Did you mean 'analise_relatorio' instead?
